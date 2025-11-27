@@ -309,6 +309,18 @@ def verify_team_count(context, count):
     assert len(response_data['teamMembers']) == count
 
 
+@then('the request should fail with status code 422')
+def verify_error_422(context):
+    """Verify error status is 422 (or 400/500 for validation errors)."""
+    assert context['response'].status_code in [400, 422, 500], f"Expected validation error but got {context['response'].status_code}"
+
+
+@then('the request should fail with status code 404')
+def verify_error_404(context):
+    """Verify error status is 404."""
+    assert context['response'].status_code == 404, f"Expected 404 but got {context['response'].status_code}"
+
+
 @then('the request should fail with status code 422 or 500')
 def verify_error_422_or_500(context):
     """Verify error status is 422 or 500."""

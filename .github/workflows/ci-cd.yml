@@ -63,7 +63,7 @@ jobs:
       
       - name: Run unit tests
         run: |
-          pytest tests/unit/ -v --tb=short -m unit
+          pytest tests/unit/ -v --tb=short
       
       - name: Upload unit test results
         if: always()
@@ -97,7 +97,7 @@ jobs:
       
       - name: Run contract tests
         run: |
-          pytest tests/contract/ -v --tb=short -m contract
+          pytest tests/contract/ -v --tb=short
 
   # Stage 4: Component Tests
   component-tests:
@@ -122,7 +122,7 @@ jobs:
       
       - name: Run component tests
         run: |
-          pytest tests/component/ -v --tb=short -m component
+          pytest tests/component/ -v --tb=short
 
   # Stage 5: Functional Tests
   functional-tests:
@@ -147,7 +147,7 @@ jobs:
       
       - name: Run functional tests
         run: |
-          pytest tests/functional/ -v --tb=short -m functional
+          pytest tests/functional/ -v --tb=short
 
   # Stage 6: Resiliency Tests
   resiliency-tests:
@@ -172,7 +172,7 @@ jobs:
       
       - name: Run resiliency tests
         run: |
-          pytest tests/resiliency/ -v --tb=short -m resiliency
+          pytest tests/resiliency/ -v --tb=short
 
   # Stage 7: Performance Tests (Optional - run on main branch only)
   performance-tests:

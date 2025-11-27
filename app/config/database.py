@@ -25,7 +25,7 @@ engine = create_async_engine(
     echo=False,  # Set to True for SQL query logging
     pool_size=10,  # Connection pool size
     max_overflow=20,  # Max connections beyond pool_size
-    pool_pre_ping=True,  # Verify connections before using
+    pool_pre_ping=False,  # Disabled for testing - avoids event loop conflicts
     pool_recycle=3600,  # Recycle connections after 1 hour
 )
 

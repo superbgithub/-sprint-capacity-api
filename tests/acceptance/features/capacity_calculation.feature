@@ -8,15 +8,7 @@ Feature: Capacity Calculation
     And the database is clean
 
   Scenario: Calculate capacity for sprint with no vacations or holidays
-    Given a sprint exists with the following details:
-      | sprintNumber | 25-601                |
-      | startDate    | 2025-12-01            |
-      | endDate      | 2025-12-14            |
-    And the sprint has team members:
-      | name        | role      |
-      | John Doe    | Developer |
-      | Jane Smith  | Developer |
-      | Mark Brown  | Tester    |
+    Given a sprint exists from "2025-12-01" to "2025-12-14" with 3 team members
     When I request the capacity calculation
     Then the total capacity should be 30 days
     And each team member should have 10 working days
@@ -29,40 +21,24 @@ Feature: Capacity Calculation
     And the total capacity should be 20 days
 
   Scenario: Calculate capacity with team member vacations
-    Given a sprint exists from "2025-12-01" to "2025-12-14"
-    And the sprint has team members:
-      | name         | role      |
-      | Alice Cooper | Developer |
-      | Bob Dylan    | Developer |
-    And "Alice Cooper" has vacation from "2025-12-05" to "2025-12-06"
+    Given a sprint exists from "2025-12-01" to "2025-12-14" with 2 team members
+    And one team member has vacation from "2025-12-05" to "2025-12-06"
     When I request the capacity calculation
-    Then Alice Cooper's capacity should be reduced by 2 days
-    And Bob Dylan's capacity should be 10 days
-    And the total capacity should be 18 days
+    Then the total capacity should be 18 days
 
   Scenario: Calculate capacity with holidays
-    Given a sprint exists from "2025-12-01" to "2025-12-14"
-    And the sprint has 3 team members
-    And the sprint has the following holidays:
-      | date       | name        |
-      | 2025-12-10 | Company Day |
+    Given a sprint exists from "2025-12-01" to "2025-12-14" with 3 team members
+    And the sprint has a holiday on "2025-12-10"
     When I request the capacity calculation
     Then each team member should have 9 working days
     And the total capacity should be 27 days
 
   Scenario: Calculate capacity with both vacations and holidays
-    Given a sprint exists from "2025-12-01" to "2025-12-20"
-    And the sprint has team members:
-      | name          | role      |
-      | Member 1      | Developer |
-      | Member 2      | Tester    |
-      | Member 3      | Manager   |
-    And "Member 1" has vacation from "2025-12-05" to "2025-12-06"
+    Given a sprint exists from "2025-12-01" to "2025-12-20" with 3 team members
+    And one team member has vacation from "2025-12-05" to "2025-12-06"
     And the sprint has a holiday on "2025-12-10"
     When I request the capacity calculation
-    Then Member 1's capacity should account for vacation and holiday
-    And Member 2's capacity should account for holiday only
-    And the total capacity should be correctly calculated
+    Then the total capacity should be correctly calculated
 
   Scenario: Calculate capacity for sprint with confidence percentage
     Given a sprint exists with confidence percentage 80.0

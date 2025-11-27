@@ -9,30 +9,58 @@ from datetime import datetime, date
 scenarios('../features/capacity_calculation.feature')
 
 
-@given('a sprint exists with the following details:')
-def sprint_with_details(context, test_client):
-    """Create sprint with specified details."""
+@given('the API is running')
+def api_running(test_client):
+    """Ensure API is accessible."""
+    # API is already running via test_client fixture
+    pass
+
+
+@given('the database is clean')
+def clean_database(test_db):
+    """Database is cleaned by the fixture."""
+    pass
+
+
+@given(parsers.parse('a sprint exists from "{start_date}" to "{end_date}" with {count:d} team members'))
+def sprint_with_details(context, test_client, start_date, end_date, count):
+    """Create sprint with specified details and team members."""
     context['sprint_data'] = {
-        "sprintNumber": "25-601",
-        "startDate": "2025-12-01",
-        "endDate": "2025-12-14",
+        "sprintNumber": f"25-{600+count}",
+        "startDate": start_date,
+        "endDate": end_date,
         "confidencePercentage": 80.0,
-        "teamMembers": [],
+        "teamMembers": [
+            {
+                "name": f"Member {i}",
+                "role": "Developer",
+                "vacations": []
+            }
+            for i in range(count)
+        ],
         "holidays": []
     }
-
-
-@given('the sprint has team members:')
-def add_team_members(context, test_client):
-    """Add team members to sprint data."""
-    team_members = [
-        {"name": "John Doe", "role": "Developer", "vacations": []},
-        {"name": "Jane Smith", "role": "Developer", "vacations": []},
-        {"name": "Mark Brown", "role": "Tester", "vacations": []},
-    ]
-    context['sprint_data']['teamMembers'] = team_members
     
     # Create the sprint
+    response = test_client.post("/v1/sprints", json=context['sprint_data'])
+    assert response.status_code == 201
+    context['sprint_id'] = response.json()["id"]
+
+
+@given(parsers.parse('one team member has vacation from "{start_date}" to "{end_date}"'))
+def add_vacation_to_first_member(context, test_client, start_date, end_date):
+    """Add vacation to first team member and recreate sprint."""
+    # Need to recreate sprint with vacation
+    if 'sprint_id' in context:
+        # Delete the old sprint
+        test_client.delete(f"/v1/sprints/{context['sprint_id']}")
+    
+    context['sprint_data']['teamMembers'][0]['vacations'] = [{
+        "startDate": start_date,
+        "endDate": end_date
+    }]
+    
+    # Create new sprint with vacation
     response = test_client.post("/v1/sprints", json=context['sprint_data'])
     assert response.status_code == 201
     context['sprint_id'] = response.json()["id"]

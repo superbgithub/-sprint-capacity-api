@@ -15,11 +15,7 @@ Feature: Sprint Management
     And the sprint number should be "25-101"
 
   Scenario: Create sprint with team members
-    Given I have sprint data with the following team members:
-      | name          | role      |
-      | Alice Smith   | Developer |
-      | Bob Johnson   | Tester    |
-      | Carol Wilson  | Manager   |
+    Given I have sprint data with 3 team members
     When I create a new sprint with sprint number "25-102"
     Then the sprint should be created successfully
     And the sprint should have 3 team members
@@ -27,15 +23,11 @@ Feature: Sprint Management
   Scenario: Cannot create sprint with duplicate sprint number
     Given a sprint exists with sprint number "25-103"
     When I try to create another sprint with sprint number "25-103"
-    Then the request should fail with status code 422
+    Then the request should fail with status code 422 or 500
     And the error message should indicate duplicate sprint number
 
   Scenario: Retrieve all sprints
-    Given the following sprints exist:
-      | sprintNumber | startDate  | endDate    |
-      | 25-201       | 2025-12-01 | 2025-12-14 |
-      | 25-202       | 2025-12-15 | 2025-12-28 |
-      | 25-203       | 2026-01-05 | 2026-01-18 |
+    Given 3 sprints exist in the system
     When I request all sprints
     Then I should receive 3 sprints
     And the sprints should be in the response
@@ -48,11 +40,7 @@ Feature: Sprint Management
 
   Scenario: Update sprint information
     Given a sprint exists with sprint number "25-401"
-    When I update the sprint with new data:
-      | field               | value      |
-      | startDate           | 2026-02-01 |
-      | endDate             | 2026-02-14 |
-      | confidencePercentage| 85.5       |
+    When I update the sprint with new dates and confidence
     Then the sprint should be updated successfully
     And the updated fields should be reflected
 

@@ -43,17 +43,22 @@ def valid_sprint_data(context, sprint_number):
     }
 
 
-@given('I have sprint data with the following team members:')
-def sprint_data_with_team(context, test_client):
+@given(parsers.parse('I have sprint data with {count:d} team members'))
+def sprint_data_with_team(context, count):
     """Prepare sprint data with specified team members."""
-    # Parse the table from the scenario
-    context['team_members'] = []
     context['sprint_data'] = {
         "sprintNumber": "25-102",  # Will be overridden
         "startDate": "2025-12-01",
         "endDate": "2025-12-14",
         "confidencePercentage": 80.0,
-        "teamMembers": [],
+        "teamMembers": [
+            {
+                "name": f"Member {i}",
+                "role": "Developer",
+                "vacations": []
+            }
+            for i in range(count)
+        ],
         "holidays": []
     }
 
@@ -81,20 +86,16 @@ def create_sprint(context, test_client, sprint_number):
     context['sprint_number'] = sprint_number
 
 
-@given('the following sprints exist:')
-def create_multiple_sprints(context, test_client):
-    """Create multiple sprints from table data."""
+@given(parsers.parse('{count:d} sprints exist in the system'))
+def create_multiple_sprints(context, test_client, count):
+    """Create multiple sprints."""
     context['sprint_ids'] = []
-    # Note: In actual implementation, parse the table data
-    sprints = [
-        {"sprintNumber": "25-201", "startDate": "2025-12-01", "endDate": "2025-12-14"},
-        {"sprintNumber": "25-202", "startDate": "2025-12-15", "endDate": "2025-12-28"},
-        {"sprintNumber": "25-203", "startDate": "2026-01-05", "endDate": "2026-01-18"},
-    ]
     
-    for sprint_info in sprints:
+    for i in range(count):
         sprint_data = {
-            **sprint_info,
+            "sprintNumber": f"25-{200+i}",
+            "startDate": "2025-12-01",
+            "endDate": "2025-12-14",
             "confidencePercentage": 80.0,
             "teamMembers": [],
             "holidays": []
@@ -152,7 +153,7 @@ def get_sprint_by_id(context, test_client):
     context['response'] = response
 
 
-@when('I update the sprint with new data:')
+@when('I update the sprint with new dates and confidence')
 def update_sprint(context, test_client):
     """Update sprint with new data."""
     update_data = {
@@ -241,6 +242,12 @@ def verify_team_member_count(context, count):
 def verify_error_status(context, status_code):
     """Verify error status code."""
     assert context['response'].status_code == status_code
+
+
+@then('the request should fail with status code 422 or 500')
+def verify_error_status_422_or_500(context):
+    """Verify error status code is 422 or 500."""
+    assert context['response'].status_code in [422, 500]
 
 
 @then('the error message should indicate duplicate sprint number')

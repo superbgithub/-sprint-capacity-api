@@ -283,16 +283,16 @@ class TestErrorRecoveryWorkflow:
         3. Attempt invalid update (should fail)
         4. Correct update and succeed
         """
-        # Step 1: Invalid create (confidence > 100)
+        # Step 1: Invalid create (sprint confidence > 100)
         invalid_sprint = {
             "sprintNumber": "25-201",
             "startDate": "2025-12-01",
             "endDate": "2025-12-10",
+            "confidencePercentage": 150.0,  # Invalid - exceeds 100
             "teamMembers": [
                 {
                     "name": "Test",
-                    "role": "Developer",
-                    "confidencePercentage": 150.0  # Invalid
+                    "role": "Developer"
                 }
             ]
         }
@@ -301,7 +301,7 @@ class TestErrorRecoveryWorkflow:
         assert response_1.status_code == 422
         
         # Step 2: Correct and create
-        invalid_sprint["teamMembers"][0]["confidencePercentage"] = 95.0
+        invalid_sprint["confidencePercentage"] = 95.0
         response_2 = client.post("/v1/sprints", json=invalid_sprint)
         assert response_2.status_code == 201
         sprint_id = response_2.json()["id"]

@@ -2,63 +2,41 @@
 Pytest fixtures and configuration for acceptance tests.
 """
 import pytest
+import os
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
 
-from app.main import app
-from app.database import Base, get_db
-from app.config import get_settings
-
-
-# Use in-memory SQLite for acceptance tests
-SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
-
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool,
+# Use test database from environment or default
+TEST_DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql+asyncpg://postgres:postgres@localhost:5432/sprint_capacity_test"
 )
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+# Set environment variable for tests BEFORE any imports
+os.environ["DATABASE_URL"] = TEST_DATABASE_URL
 
-def override_get_db():
-    """Override database dependency for testing."""
-    try:
-        db = TestingSessionLocal()
-        yield db
-    finally:
-        db.close()
+# Now import the app after setting the DATABASE_URL
+from app.main import app  # noqa: E402
 
 
 @pytest.fixture(scope="function")
 def test_db():
-    """Create fresh database for each test."""
-    Base.metadata.create_all(bind=engine)
+    """
+    Database fixture - assumes schema is already initialized.
+    In CI/CD, scripts/init_test_db.py runs before tests.
+    Locally, run: python scripts/init_test_db.py
+    """
+    # Schema is pre-initialized, no need to create/drop here
     yield
-    Base.metadata.drop_all(bind=engine)
 
 
 @pytest.fixture(scope="function")
 def test_client(test_db):
-    """Create test client with overridden dependencies."""
-    app.dependency_overrides[get_db] = override_get_db
-    
+    """Create test client for acceptance tests."""
     with TestClient(app, raise_server_exceptions=False) as client:
         yield client
-    
-    app.dependency_overrides.clear()
 
 
 @pytest.fixture(scope="function")
 def context():
-    """Shared context for storing test data between steps."""
+    """Shared context dictionary for storing test data between BDD steps."""
     return {}
-
-
-@pytest.fixture(scope="session")
-def bdd_test_settings():
-    """BDD test settings."""
-    settings = get_settings()
-    return settings

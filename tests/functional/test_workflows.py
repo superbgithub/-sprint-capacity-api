@@ -285,8 +285,7 @@ class TestErrorRecoveryWorkflow:
         """
         # Step 1: Invalid create (confidence > 100)
         invalid_sprint = {
-            "sprintName": "Invalid Sprint",
-            "sprintDuration": 10,
+            "sprintNumber": "25-201",
             "startDate": "2025-12-01",
             "endDate": "2025-12-10",
             "teamMembers": [
@@ -309,8 +308,7 @@ class TestErrorRecoveryWorkflow:
         
         # Step 3: Invalid update (bad role)
         invalid_update = {
-            "sprintName": "Updated Sprint",
-            "sprintDuration": 10,
+            "sprintNumber": "25-202",
             "startDate": "2025-12-01",
             "endDate": "2025-12-10",
             "teamMembers": [
@@ -326,6 +324,7 @@ class TestErrorRecoveryWorkflow:
         assert response_3.status_code == 422
         
         # Step 4: Correct and update
+        invalid_update["sprintNumber"] = "25-201"  # Keep same sprint number
         invalid_update["teamMembers"][0]["role"] = "Product Owner"
         invalid_update["teamMembers"][0]["vacations"] = []
         response_4 = client.put(f"/v1/sprints/{sprint_id}", json=invalid_update)
@@ -344,8 +343,7 @@ class TestErrorRecoveryWorkflow:
         assert capacity_response.status_code == 404
         
         update_data = {
-            "sprintName": "Test",
-            "sprintDuration": 10,
+            "sprintNumber": "25-203",
             "startDate": "2025-12-01",
             "endDate": "2025-12-10",
             "teamMembers": []

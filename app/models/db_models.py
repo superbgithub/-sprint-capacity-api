@@ -43,7 +43,7 @@ class SprintModel(Base):
     __tablename__ = "sprints"
     
     id = Column(String, primary_key=True, default=lambda: f"sprint-{uuid.uuid4().hex[:8]}")
-    sprint_number = Column(String(10), nullable=False, unique=True, index=True)  # Format: YY-NN (e.g., "25-01")
+    sprint_number = Column(String(50), nullable=False, unique=True, index=True)  # Format: YY-NN or YY-UUID (e.g., "25-01" or "25-a1b2c3d4")
     sprint_name = Column(String(255), nullable=False, index=True)  # Auto-generated: "Sprint 25-01"
     start_date = Column(Date, nullable=False, index=True)
     end_date = Column(Date, nullable=False, index=True)

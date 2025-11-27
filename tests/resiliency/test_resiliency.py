@@ -12,7 +12,7 @@ import time
 @pytest.fixture
 def client():
     """Create TestClient for each test"""
-    return TestClient(app)
+    return TestClient(app, raise_server_exceptions=False)
 
 
 class TestBoundaryConditions:

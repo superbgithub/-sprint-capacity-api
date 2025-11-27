@@ -181,6 +181,89 @@ GitHub Actions workflow automatically runs on every push and PR:
 8. **Build** - Docker image creation
 9. **Deploy** - Ready for deployment
 
+## Monitoring and Observability
+
+The API includes comprehensive monitoring with structured logging and Prometheus metrics.
+
+### Features
+
+- **Structured JSON Logging**: All logs in JSON format with correlation IDs
+- **Request Tracing**: Automatic X-Request-ID generation and propagation
+- **Prometheus Metrics**: HTTP requests, business operations, errors
+- **Health Checks**: Multiple endpoints for different use cases
+- **Grafana Dashboards**: Pre-built visualization dashboards
+
+### Health Check Endpoints
+
+- `GET /health` - Basic health status
+- `GET /health/detailed` - Detailed system metrics (CPU, memory, disk)
+- `GET /health/ready` - Readiness check (for Kubernetes)
+- `GET /health/live` - Liveness check (for Kubernetes)
+- `GET /metrics` - Prometheus metrics endpoint
+
+### Metrics Collected
+
+**HTTP Metrics:**
+- `http_requests_total` - Total HTTP requests by method, endpoint, status
+- `http_request_duration_seconds` - Request duration histogram
+- `http_requests_in_progress` - Currently processing requests
+
+**Business Metrics:**
+- `sprints_created_total` - Total sprints created
+- `sprints_updated_total` - Total sprints updated
+- `sprints_deleted_total` - Total sprints deleted
+- `sprint_capacity_calculations_total` - Total capacity calculations
+
+**Error Metrics:**
+- `errors_total` - Total errors by type and endpoint
+- `validation_errors_total` - Validation errors by field
+
+**System Metrics:**
+- `active_sprints` - Number of active sprints
+- `database_connections` - Active database connections
+
+### Running with Docker Compose
+
+Start the full monitoring stack (API + Prometheus + Grafana):
+
+```powershell
+docker-compose up -d
+```
+
+Access the services:
+- **API**: http://localhost:8000
+- **API Docs**: http://localhost:8000/docs
+- **Metrics**: http://localhost:8000/metrics
+- **Prometheus**: http://localhost:9090
+- **Grafana**: http://localhost:3000 (admin/admin)
+
+### Grafana Setup
+
+1. Login to Grafana at http://localhost:3000
+2. Default credentials: `admin` / `admin`
+3. Dashboard is auto-provisioned: "Sprint Capacity API - Overview"
+4. Prometheus datasource is pre-configured
+
+### Viewing Logs
+
+The application outputs structured JSON logs:
+
+```json
+{
+  "timestamp": "2025-01-09T10:30:45.123Z",
+  "level": "INFO",
+  "logger": "app.routes.sprints",
+  "message": "Request completed: POST /v1/sprints",
+  "request_id": "550e8400-e29b-41d4-a716-446655440000",
+  "method": "POST",
+  "endpoint": "/v1/sprints",
+  "status_code": 201,
+  "duration_ms": 45.23
+}
+```
+
+Filter logs by request ID to trace a request through the system.
+
 ## Docker Support
 
 ### Build Docker Image
@@ -209,5 +292,6 @@ curl http://localhost:8000/health
 4. ✅ Comprehensive test suite (94+ tests)
 5. ✅ CI/CD pipeline (GitHub Actions)
 6. ✅ Docker containerization
-7. ⏳ Production deployment (pending)
-8. ⏳ Blue/green deployment (paused)
+7. ✅ Monitoring and observability (Prometheus + Grafana)
+8. ⏳ Production deployment (pending)
+9. ⏳ Blue/green deployment (paused)

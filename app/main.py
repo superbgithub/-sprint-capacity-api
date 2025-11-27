@@ -5,6 +5,16 @@ This is the entry point that configures and runs the server.
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes import sprints
+from app.observability import (
+    setup_logging,
+    init_metrics_metadata,
+    ObservabilityMiddleware,
+    PerformanceMonitorMiddleware
+)
+from app.observability.health import router as health_router
+
+# Setup structured logging
+setup_logging(log_level="INFO")
 
 # Create FastAPI application instance
 app = FastAPI(
@@ -17,6 +27,17 @@ app = FastAPI(
     }
 )
 
+# Initialize metrics metadata
+init_metrics_metadata(
+    app_name="team-capacity-api",
+    version="1.0.0",
+    environment="production"
+)
+
+# Add observability middleware (order matters - add these first)
+app.add_middleware(PerformanceMonitorMiddleware, slow_request_threshold=1.0)
+app.add_middleware(ObservabilityMiddleware)
+
 # Configure CORS (Cross-Origin Resource Sharing)
 # This allows your API to be called from web browsers
 app.add_middleware(
@@ -27,8 +48,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include the sprint routes
+# Include routers
 app.include_router(sprints.router, prefix="/v1")
+app.include_router(health_router)
 
 
 @app.get("/")
@@ -40,16 +62,10 @@ async def root():
         "message": "Team Capacity Management API",
         "version": "1.0.0",
         "docs": "/docs",
-        "openapi": "/openapi.json"
+        "openapi": "/openapi.json",
+        "health": "/health",
+        "metrics": "/metrics"
     }
-
-
-@app.get("/health")
-async def health_check():
-    """
-    Health check endpoint - useful for monitoring.
-    """
-    return {"status": "healthy"}
 
 
 if __name__ == "__main__":

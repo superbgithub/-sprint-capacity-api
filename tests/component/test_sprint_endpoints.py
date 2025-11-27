@@ -18,10 +18,10 @@ def client():
 def sample_sprint_data():
     """Sample sprint data for tests"""
     return {
-        "sprintName": "Component Test Sprint",
-        "sprintDuration": 14,
+        "sprintNumber": "25-50",
         "startDate": "2025-11-26",
         "endDate": "2025-12-09",
+        "confidencePercentage": 85.0,
         "teamMembers": [
             {
                 "name": "Alice Johnson",
@@ -59,16 +59,16 @@ class TestCreateSprint:
         
         assert response.status_code == 201
         data = response.json()
-        assert data["sprintName"] == "Component Test Sprint"
-        assert data["sprintDuration"] == 14
+        assert data["sprintNumber"] == "25-50"
+        assert "sprintName" in data  # Auto-generated
+        assert "sprintDuration" in data  # Auto-calculated
         assert len(data["teamMembers"]) == 2
         assert len(data["holidays"]) == 1
     
     def test_create_sprint_minimal_data(self, client):
         """Test sprint creation with minimal required fields"""
         minimal_data = {
-            "sprintName": "Minimal Sprint",
-            "sprintDuration": 7,
+            "sprintNumber": "25-51",
             "startDate": "2025-12-01",
             "endDate": "2025-12-07",
             "teamMembers": []
@@ -84,8 +84,7 @@ class TestCreateSprint:
     def test_create_sprint_with_defaults(self, client):
         """Test sprint creation uses default confidence percentage"""
         sprint_data = {
-            "sprintName": "Default Confidence Sprint",
-            "sprintDuration": 10,
+            "sprintNumber": "25-52",
             "startDate": "2025-12-01",
             "endDate": "2025-12-10",
             "teamMembers": [
@@ -121,7 +120,7 @@ class TestGetSprints:
         client.post("/v1/sprints", json=sample_sprint_data)
         
         sprint_data_2 = sample_sprint_data.copy()
-        sprint_data_2["sprintName"] = "Second Sprint"
+        sprint_data_2["sprintNumber"] = "25-53"
         client.post("/v1/sprints", json=sprint_data_2)
         
         # Get all
@@ -147,7 +146,7 @@ class TestGetSprintById:
         assert response.status_code == 200
         data = response.json()
         assert data["id"] == sprint_id
-        assert data["sprintName"] == "Component Test Sprint"
+        assert data["sprintNumber"] == "25-50"
     
     def test_get_sprint_by_id_not_found(self, client):
         """Test getting non-existent sprint returns 404"""
@@ -169,10 +168,10 @@ class TestUpdateSprint:
         
         # Update it
         updated_data = {
-            "sprintName": "Updated Sprint Name",
-            "sprintDuration": 10,
+            "sprintNumber": "25-54",
             "startDate": "2025-12-01",
             "endDate": "2025-12-10",
+            "confidencePercentage": 90.0,
             "teamMembers": [
                 {
                     "name": "New Member",
@@ -189,8 +188,8 @@ class TestUpdateSprint:
         assert response.status_code == 200
         data = response.json()
         assert data["id"] == sprint_id
-        assert data["sprintName"] == "Updated Sprint Name"
-        assert data["sprintDuration"] == 10
+        assert data["sprintNumber"] == "25-54"
+        assert "sprintDuration" in data  # Auto-calculated
         assert len(data["teamMembers"]) == 1
     
     def test_update_sprint_not_found(self, client, sample_sprint_data):
@@ -206,18 +205,18 @@ class TestUpdateSprint:
         # Create sprint
         create_response = client.post("/v1/sprints", json=sample_sprint_data)
         sprint_id = create_response.json()["id"]
-        original_name = create_response.json()["sprintName"]
+        original_number = create_response.json()["sprintNumber"]
         
-        # Update only duration
+        # Update confidence percentage
         updated_data = sample_sprint_data.copy()
-        updated_data["sprintDuration"] = 21
+        updated_data["confidencePercentage"] = 75.0
         
         response = client.put(f"/v1/sprints/{sprint_id}", json=updated_data)
         
         assert response.status_code == 200
         data = response.json()
-        assert data["sprintDuration"] == 21
-        assert data["sprintName"] == original_name
+        assert data["confidencePercentage"] == 75.0
+        assert data["sprintNumber"] == original_number
 
 
 class TestDeleteSprint:
@@ -271,8 +270,7 @@ class TestGetCapacity:
     def test_get_capacity_empty_team(self, client):
         """Test capacity calculation with no team members"""
         sprint_data = {
-            "sprintName": "Empty Team Sprint",
-            "sprintDuration": 10,
+            "sprintNumber": "25-55",
             "startDate": "2025-12-01",
             "endDate": "2025-12-10",
             "teamMembers": []
@@ -301,8 +299,7 @@ class TestGetCapacity:
         """Test capacity excludes weekends correctly"""
         # Sprint from Monday to Sunday (should exclude weekend days)
         sprint_data = {
-            "sprintName": "Weekend Sprint",
-            "sprintDuration": 7,
+            "sprintNumber": "25-56",
             "startDate": "2025-12-01",  # Monday
             "endDate": "2025-12-07",    # Sunday
             "teamMembers": [

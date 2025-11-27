@@ -24,47 +24,8 @@ def client():
     Note: Database schema should be initialized BEFORE running pytest
     using scripts/init_test_db.py in CI/CD or locally.
     
-    Important: We recreate the database engine for each test module to ensure
-    it uses the correct event loop context for TestClient.
+    TestClient handles its own event loop management per request.
+    The database engine from app.config.database will be used.
     """
-    # Import database module to access engine
-    from app.config import database
-    from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
-    
-    # Dispose of the existing engine that was created at import time
-    import asyncio
-    try:
-        asyncio.run(database.engine.dispose())
-    except RuntimeError:
-        # Already in event loop context, that's fine
-        pass
-    
-    # Create a new engine in the current event loop context
-    # Use NullPool to disable connection pooling and avoid event loop conflicts
-    from sqlalchemy.pool import NullPool
-    new_engine = create_async_engine(
-        TEST_DATABASE_URL,
-        echo=False,
-        poolclass=NullPool,  # Disable pooling to avoid event loop issues
-        pool_pre_ping=False,
-    )
-    
-    # Replace the global engine with our new one
-    database.engine = new_engine
-    database.AsyncSessionLocal = async_sessionmaker(
-        new_engine,
-        class_=AsyncSession,
-        expire_on_commit=False,
-        autocommit=False,
-        autoflush=False,
-    )
-    
-    # Now create the test client
-    with TestClient(app) as test_client:
+    with TestClient(app, raise_server_exceptions=False) as test_client:
         yield test_client
-    
-    # Clean up: dispose of the engine after tests
-    try:
-        asyncio.run(new_engine.dispose())
-    except RuntimeError:
-        pass

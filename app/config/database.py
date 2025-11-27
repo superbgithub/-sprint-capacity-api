@@ -20,13 +20,18 @@ DATABASE_URL = os.getenv(
 )
 
 # Create async engine with connection pooling
+# Use NullPool in test environment to avoid event loop conflicts with TestClient
+from sqlalchemy.pool import NullPool
+_poolclass = NullPool if "test" in DATABASE_URL else None
+
 engine = create_async_engine(
     DATABASE_URL,
     echo=False,  # Set to True for SQL query logging
-    pool_size=10,  # Connection pool size
-    max_overflow=20,  # Max connections beyond pool_size
+    poolclass=_poolclass,  # NullPool for tests, default for production
+    pool_size=10 if _poolclass is None else None,  # Connection pool size (prod only)
+    max_overflow=20 if _poolclass is None else None,  # Max connections beyond pool_size (prod only)
     pool_pre_ping=False,  # Disabled for testing - avoids event loop conflicts
-    pool_recycle=3600,  # Recycle connections after 1 hour
+    pool_recycle=3600 if _poolclass is None else None,  # Recycle connections after 1 hour (prod only)
 )
 
 # Session factory

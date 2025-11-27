@@ -22,25 +22,26 @@ def setup_test_database():
     Initialize test database schema before database-dependent tests.
     Use this fixture explicitly in tests that need database access.
     """
-    try:
-        from sqlalchemy import create_engine
-        from app.config.database import Base
-        
-        # Use synchronous engine for schema creation
-        engine = create_engine(SYNC_TEST_DATABASE_URL)
-        
-        # Create all tables
-        Base.metadata.create_all(bind=engine)
-        
-        yield
-        
-        # Cleanup after all tests
-        Base.metadata.drop_all(bind=engine)
-        engine.dispose()
-    except Exception as e:
-        # If database connection fails, skip gracefully for unit tests
-        print(f"Warning: Could not set up test database: {e}")
-        yield
+    from sqlalchemy import create_engine
+    from app.config.database import Base
+    
+    # Import all models to ensure they're registered with Base.metadata
+    import app.models.db_models  # noqa: F401
+    
+    # Use synchronous engine for schema creation
+    engine = create_engine(SYNC_TEST_DATABASE_URL, echo=True)
+    
+    # Drop all tables first to ensure clean state
+    Base.metadata.drop_all(bind=engine)
+    
+    # Create all tables
+    Base.metadata.create_all(bind=engine)
+    
+    yield
+    
+    # Cleanup after all tests
+    Base.metadata.drop_all(bind=engine)
+    engine.dispose()
 
 
 # Shared test client - reuse to prevent event loop issues

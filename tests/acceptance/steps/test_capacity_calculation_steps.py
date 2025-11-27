@@ -23,7 +23,7 @@ def clean_database(test_db):
 
 @given(parsers.parse('a sprint exists from "{start_date}" to "{end_date}" with {count:d} team members'))
 def sprint_with_details(context, test_client, start_date, end_date, count):
-    """Create sprint with specified details and team members."""
+    """Prepare sprint data - DOES NOT create sprint yet, allows adding holidays/vacations first."""
     context['sprint_data'] = {
         "sprintNumber": f"25-{str(uuid.uuid4())[:8]}",
         "startDate": start_date,
@@ -39,11 +39,8 @@ def sprint_with_details(context, test_client, start_date, end_date, count):
         ],
         "holidays": []
     }
-    
-    # Create the sprint
-    response = test_client.post("/v1/sprints", json=context['sprint_data'])
-    assert response.status_code == 201
-    context['sprint_id'] = response.json()["id"]
+    # Don't create sprint yet - allow subsequent steps to add holidays/vacations
+    # Sprint will be created in request_capacity step if not already created
 
 
 @given(parsers.parse('one team member has vacation from "{start_date}" to "{end_date}"'))

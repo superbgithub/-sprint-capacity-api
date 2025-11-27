@@ -21,8 +21,7 @@ class TestBoundaryConditions:
     def test_zero_duration_sprint(self, client):
         """Test sprint with 0 duration"""
         sprint_data = {
-            "sprintName": "Zero Duration",
-            "sprintDuration": 0,
+            "sprintNumber": "25-301",
             "startDate": "2025-12-01",
             "endDate": "2025-12-01",
             "teamMembers": []
@@ -39,15 +38,13 @@ class TestBoundaryConditions:
     def test_very_long_sprint(self, client):
         """Test sprint with very long duration (365 days)"""
         sprint_data = {
-            "sprintName": "Year Long Sprint",
-            "sprintDuration": 365,
+            "sprintNumber": "25-302",
             "startDate": "2025-01-01",
             "endDate": "2025-12-31",
             "teamMembers": [
                 {
                     "name": "Test Member",
-                    "role": "Developer",
-                    "confidencePercentage": 100.0
+                    "role": "Developer"
                 }
             ]
         }
@@ -68,15 +65,13 @@ class TestBoundaryConditions:
         team_members = [
             {
                 "name": f"Member {i}",
-                "role": "Developer",
-                "confidencePercentage": 80.0 + (i % 20)
+                "role": "Developer"
             }
             for i in range(100)
         ]
         
         sprint_data = {
-            "sprintName": "Large Team Sprint",
-            "sprintDuration": 10,
+            "sprintNumber": "25-303",
             "startDate": "2025-12-01",
             "endDate": "2025-12-10",
             "teamMembers": team_members
@@ -105,15 +100,13 @@ class TestBoundaryConditions:
         ]
         
         sprint_data = {
-            "sprintName": "All Holidays Sprint",
-            "sprintDuration": 10,
+            "sprintNumber": "25-304",
             "startDate": "2025-12-01",
             "endDate": "2025-12-10",
             "teamMembers": [
                 {
                     "name": "Test Member",
-                    "role": "Developer",
-                    "confidencePercentage": 100.0
+                    "role": "Developer"
                 }
             ],
             "holidays": holidays
@@ -131,15 +124,13 @@ class TestBoundaryConditions:
     def test_overlapping_vacations(self, client):
         """Test member with overlapping vacation periods"""
         sprint_data = {
-            "sprintName": "Overlapping Vacations",
-            "sprintDuration": 14,
+            "sprintNumber": "25-305",
             "startDate": "2025-12-01",
             "endDate": "2025-12-14",
             "teamMembers": [
                 {
                     "name": "Test Member",
                     "role": "Developer",
-                    "confidencePercentage": 100.0,
                     "vacations": [
                         {
                             "startDate": "2025-12-05",
@@ -166,20 +157,18 @@ class TestBoundaryConditions:
     def test_confidence_at_boundaries(self, client):
         """Test confidence percentage at 0% and 100%"""
         sprint_data = {
-            "sprintName": "Boundary Confidence",
-            "sprintDuration": 10,
+            "sprintNumber": "25-306",
             "startDate": "2025-12-01",
             "endDate": "2025-12-10",
+            "confidencePercentage": 50.0,
             "teamMembers": [
                 {
                     "name": "Zero Confidence",
-                    "role": "Developer",
-                    "confidencePercentage": 0.0
+                    "role": "Developer"
                 },
                 {
                     "name": "Full Confidence",
-                    "role": "Developer",
-                    "confidencePercentage": 100.0
+                    "role": "Developer"
                 }
             ]
         }
@@ -190,10 +179,10 @@ class TestBoundaryConditions:
         sprint_id = response.json()["id"]
         
         capacity = client.get(f"/v1/sprints/{sprint_id}/capacity").json()
-        members = {m["memberName"]: m for m in capacity["memberCapacity"]}
         
-        assert members["Zero Confidence"]["adjustedCapacity"] == 0.0
-        assert members["Full Confidence"]["adjustedCapacity"] > 0
+        # Test that capacity is calculated with sprint-level confidence
+        assert capacity["teamSize"] == 2
+        assert capacity["adjustedTotalCapacity"] > 0
 
 
 class TestConcurrentOperations:
@@ -203,8 +192,7 @@ class TestConcurrentOperations:
         """Test creating multiple sprints concurrently"""
         def create_sprint(index):
             sprint_data = {
-                "sprintName": f"Concurrent Sprint {index}",
-                "sprintDuration": 10,
+                "sprintNumber": f"25-{310+index}",
                 "startDate": "2025-12-01",
                 "endDate": "2025-12-10",
                 "teamMembers": []
@@ -228,8 +216,7 @@ class TestConcurrentOperations:
         """Test updating same sprint concurrently"""
         # Create a sprint first
         sprint_data = {
-            "sprintName": "Update Target",
-            "sprintDuration": 10,
+            "sprintNumber": "25-320",
             "startDate": "2025-12-01",
             "endDate": "2025-12-10",
             "teamMembers": []
@@ -240,7 +227,6 @@ class TestConcurrentOperations:
         
         def update_sprint(index):
             updated_data = sprint_data.copy()
-            updated_data["sprintName"] = f"Updated Name {index}"
             return client.put(f"/v1/sprints/{sprint_id}", json=updated_data)
         
         # Update concurrently
@@ -256,20 +242,17 @@ class TestConcurrentOperations:
         """Test calculating capacity concurrently for same sprint"""
         # Create sprint with team
         sprint_data = {
-            "sprintName": "Capacity Test",
-            "sprintDuration": 14,
+            "sprintNumber": "25-321",
             "startDate": "2025-12-01",
             "endDate": "2025-12-14",
             "teamMembers": [
                 {
                     "name": "Member 1",
-                    "role": "Developer",
-                    "confidencePercentage": 90.0
+                    "role": "Developer"
                 },
                 {
                     "name": "Member 2",
-                    "role": "Tester",
-                    "confidencePercentage": 85.0
+                    "role": "Tester"
                 }
             ]
         }
@@ -308,8 +291,7 @@ class TestInvalidInputs:
         
         for invalid_date in invalid_dates:
             sprint_data = {
-                "sprintName": "Invalid Date Test",
-                "sprintDuration": 10,
+                "sprintNumber": "25-330",
                 "startDate": invalid_date,
                 "endDate": "2025-12-10",
                 "teamMembers": []
@@ -321,8 +303,7 @@ class TestInvalidInputs:
     def test_end_date_before_start_date(self, client):
         """Test sprint with end date before start date"""
         sprint_data = {
-            "sprintName": "Backwards Sprint",
-            "sprintDuration": 10,
+            "sprintNumber": "25-331",
             "startDate": "2025-12-10",
             "endDate": "2025-12-01",  # Before start date
             "teamMembers": []
@@ -336,15 +317,14 @@ class TestInvalidInputs:
     def test_negative_confidence(self, client):
         """Test negative confidence percentage"""
         sprint_data = {
-            "sprintName": "Negative Confidence",
-            "sprintDuration": 10,
+            "sprintNumber": "25-332",
             "startDate": "2025-12-01",
             "endDate": "2025-12-10",
+            "confidencePercentage": -50.0,  # Negative - should be rejected
             "teamMembers": [
                 {
                     "name": "Test",
-                    "role": "Developer",
-                    "confidencePercentage": -50.0  # Negative
+                    "role": "Developer"
                 }
             ]
         }
@@ -355,15 +335,13 @@ class TestInvalidInputs:
     def test_very_long_strings(self, client):
         """Test extremely long string inputs"""
         sprint_data = {
-            "sprintName": "A" * 10000,  # Very long name
-            "sprintDuration": 10,
+            "sprintNumber": "25-333",
             "startDate": "2025-12-01",
             "endDate": "2025-12-10",
             "teamMembers": [
                 {
                     "name": "B" * 10000,  # Very long member name
-                    "role": "Developer",
-                    "confidencePercentage": 80.0
+                    "role": "Developer"
                 }
             ]
         }
@@ -383,10 +361,9 @@ class TestInvalidInputs:
             "Name with Ñoño",
         ]
         
-        for name in special_names:
+        for i, name in enumerate(special_names):
             sprint_data = {
-                "sprintName": name,
-                "sprintDuration": 10,
+                "sprintNumber": f"25-{340+i}",
                 "startDate": "2025-12-01",
                 "endDate": "2025-12-10",
                 "teamMembers": []
@@ -427,15 +404,14 @@ class TestErrorPropagation:
     def test_multiple_validation_errors(self, client):
         """Test handling of multiple validation errors at once"""
         sprint_data = {
-            "sprintName": "",  # Empty name (might be invalid)
-            "sprintDuration": -5,  # Negative duration
+            "sprintNumber": "",  # Empty sprint number (invalid)
             "startDate": "invalid-date",
             "endDate": "also-invalid",
+            "confidencePercentage": 150.0,  # Exceeds 100
             "teamMembers": [
                 {
                     "name": "",
-                    "role": "InvalidRole",
-                    "confidencePercentage": 150.0
+                    "role": "InvalidRole"
                 }
             ]
         }

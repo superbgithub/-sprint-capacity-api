@@ -40,13 +40,13 @@ def client():
         pass
     
     # Create a new engine in the current event loop context
+    # Use NullPool to disable connection pooling and avoid event loop conflicts
+    from sqlalchemy.pool import NullPool
     new_engine = create_async_engine(
         TEST_DATABASE_URL,
         echo=False,
-        pool_size=5,
-        max_overflow=10,
+        poolclass=NullPool,  # Disable pooling to avoid event loop issues
         pool_pre_ping=False,
-        pool_recycle=3600,
     )
     
     # Replace the global engine with our new one

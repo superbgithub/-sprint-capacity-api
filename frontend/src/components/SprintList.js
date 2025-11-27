@@ -10,8 +10,9 @@ const SprintList = ({ sprints, onSprintSelect, onViewCapacity }) => {
         <div style={styles.grid}>
           {sprints.map((sprint) => (
             <div key={sprint.id} style={styles.card}>
-              <h3>{sprint.sprintName}</h3>
+              <h3>{sprint.sprintName || `Sprint ${sprint.sprintNumber}`}</h3>
               <div style={styles.info}>
+                <p><strong>Sprint #:</strong> {sprint.sprintNumber}</p>
                 <p><strong>Duration:</strong> {sprint.sprintDuration} days</p>
                 <p><strong>Start:</strong> {sprint.startDate}</p>
                 <p><strong>End:</strong> {sprint.endDate}</p>

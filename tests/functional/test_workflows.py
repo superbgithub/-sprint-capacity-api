@@ -28,15 +28,14 @@ class TestSprintLifecycleWorkflow:
         """
         # Step 1: Create sprint
         sprint_data = {
-            "sprintName": "Q4 Sprint 1",
-            "sprintDuration": 14,
+            "sprintNumber": "25-01",
             "startDate": "2025-11-26",
             "endDate": "2025-12-09",
+            "confidencePercentage": 90.0,
             "teamMembers": [
                 {
                     "name": "Alice Developer",
                     "role": "Developer",
-                    "confidencePercentage": 90.0,
                     "vacations": [
                         {
                             "startDate": "2025-11-28",
@@ -61,7 +60,8 @@ class TestSprintLifecycleWorkflow:
         get_response = client.get(f"/v1/sprints/{sprint_id}")
         assert get_response.status_code == 200
         sprint = get_response.json()
-        assert sprint["sprintName"] == "Q4 Sprint 1"
+        assert sprint["sprintNumber"] == "25-01"
+        assert sprint["sprintName"] == "Sprint 25-01"
         assert len(sprint["teamMembers"]) == 1
         
         # Step 3: Calculate capacity
@@ -80,7 +80,6 @@ class TestSprintLifecycleWorkflow:
         updated_data["teamMembers"].append({
             "name": "Bob Tester",
             "role": "Tester",
-            "confidencePercentage": 85.0,
             "vacations": []
         })
         
@@ -121,17 +120,18 @@ class TestMultiSprintManagement:
         sprint_ids = []
         for i in range(3):
             sprint_data = {
-                "sprintName": f"Sprint {i+1}",
-                "sprintDuration": 10,
+                "sprintNumber": f"25-{i+1:02d}",
                 "startDate": f"2025-12-0{i+1}",
                 "endDate": f"2025-12-1{i+1}",
+                "confidencePercentage": 80.0 + i * 5,
                 "teamMembers": [
                     {
                         "name": f"Developer {i+1}",
                         "role": "Developer",
-                        "confidencePercentage": 80.0 + i * 5
+                        "vacations": []
                     }
-                ]
+                ],
+                "holidays": []
             }
             
             response = client.post("/v1/sprints", json=sprint_data)
@@ -146,15 +146,17 @@ class TestMultiSprintManagement:
         
         # Step 3: Update second sprint
         update_data = {
-            "sprintName": "Updated Sprint 2",
-            "sprintDuration": 14,
+            "sprintNumber": "25-10",
             "startDate": "2025-12-02",
             "endDate": "2025-12-16",
-            "teamMembers": []
+            "confidencePercentage": 85.0,
+            "teamMembers": [],
+            "holidays": []
         }
         update_response = client.put(f"/v1/sprints/{sprint_ids[1]}", json=update_data)
         assert update_response.status_code == 200
-        assert update_response.json()["sprintName"] == "Updated Sprint 2"
+        assert update_response.json()["sprintNumber"] == "25-10"
+        assert update_response.json()["sprintName"] == "Sprint 25-10"
         
         # Step 4: Delete first sprint
         delete_response = client.delete(f"/v1/sprints/{sprint_ids[0]}")
@@ -184,15 +186,14 @@ class TestCapacityPlanningWorkflow:
         """
         # Step 1: Create sprint
         sprint_data = {
-            "sprintName": "Capacity Planning Sprint",
-            "sprintDuration": 14,
+            "sprintNumber": "25-11",
             "startDate": "2025-12-01",
             "endDate": "2025-12-14",
+            "confidencePercentage": 90.0,
             "teamMembers": [
                 {
                     "name": "Alice",
                     "role": "Developer",
-                    "confidencePercentage": 90.0,
                     "vacations": [
                         {
                             "startDate": "2025-12-05",

@@ -1,6 +1,59 @@
 version: '3.8'
 
 services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    environment:
+      POSTGRES_DB: sprint_capacity
+      POSTGRES_USER: sprint_user
+      POSTGRES_PASSWORD: sprint_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - monitoring
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sprint_user -d sprint_capacity"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Zookeeper for Kafka coordination
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.3
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - monitoring
+    restart: unless-stopped
+
+  # Kafka message broker
+  kafka:
+    image: confluentinc/cp-kafka:7.5.3
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    networks:
+      - monitoring
+    restart: unless-stopped
+
   # Sprint Capacity API
   api:
     build: .
@@ -10,6 +63,8 @@ services:
     environment:
       - LOG_LEVEL=INFO
       - ENVIRONMENT=production
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - DATABASE_URL=postgresql+asyncpg://sprint_user:sprint_password@postgres:5432/sprint_capacity
     networks:
       - monitoring
     labels:
@@ -17,6 +72,11 @@ services:
       - "prometheus.port=8000"
       - "prometheus.path=/metrics"
     restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
 
   # Prometheus for metrics collection
   prometheus:
@@ -62,5 +122,6 @@ networks:
     driver: bridge
 
 volumes:
+  postgres_data:
   prometheus_data:
   grafana_data:

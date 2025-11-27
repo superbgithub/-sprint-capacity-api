@@ -4,7 +4,7 @@ This is the entry point that configures and runs the server.
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import sprints
+from app.routes import sprints, calendar
 from app.observability import (
     setup_logging,
     init_metrics_metadata,
@@ -12,6 +12,10 @@ from app.observability import (
     PerformanceMonitorMiddleware
 )
 from app.observability.health import router as health_router
+from app.events import get_kafka_producer
+from app.config.database import init_db, close_db
+# Import models so they're registered with SQLAlchemy Base before init_db()
+from app.models import db_models  # noqa: F401
 
 # Setup structured logging
 setup_logging(log_level="INFO")
@@ -50,7 +54,30 @@ app.add_middleware(
 
 # Include routers
 app.include_router(sprints.router, prefix="/v1")
+app.include_router(calendar.router)  # Feature-flagged calendar routes
 app.include_router(health_router)
+
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize services on startup."""
+    # Initialize database tables
+    await init_db()
+    
+    # Initialize Kafka producer
+    kafka_producer = get_kafka_producer()
+    await kafka_producer.start()
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Cleanup services on shutdown."""
+    # Close Kafka producer
+    kafka_producer = get_kafka_producer()
+    await kafka_producer.stop()
+    
+    # Close database connections
+    await close_db()
 
 
 @app.get("/")

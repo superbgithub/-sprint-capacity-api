@@ -107,8 +107,9 @@ def calculate_capacity(sprint: Sprint) -> CapacitySummary:
         available_days -= vacation_days
         total_vacation_days += vacation_days
         
-        # Apply confidence percentage to get adjusted capacity
-        confidence = member.confidencePercentage if member.confidencePercentage is not None else 100.0
+        # Apply sprint-level confidence percentage to get adjusted capacity
+        # Confidence is now at sprint level, not per team member
+        confidence = sprint.confidencePercentage if sprint.confidencePercentage is not None else 100.0
         adjusted_capacity = available_days * (confidence / 100.0)
         
         # Add to totals
@@ -121,7 +122,7 @@ def calculate_capacity(sprint: Sprint) -> CapacitySummary:
             memberName=member.name,
             availableDays=available_days,
             vacationDays=vacation_days,
-            confidencePercentage=confidence,
+            confidencePercentage=confidence,  # Sprint-level confidence
             adjustedCapacity=round(adjusted_capacity, 2)
         ))
     

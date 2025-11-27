@@ -118,8 +118,10 @@ class TestCalculateCapacity:
         """Test capacity for one team member without vacation"""
         sprint = Sprint(
             id="test-sprint",
-            sprintName="Test Sprint",
-            sprintDuration=5,
+            sprintNumber="25-01",
+            sprintName="Sprint 25-01",
+            sprintDuration=3,
+            confidencePercentage=100.0,
             startDate=date(2025, 11, 26),  # Wednesday
             endDate=date(2025, 11, 28),    # Friday
             teamMembers=[
@@ -127,7 +129,6 @@ class TestCalculateCapacity:
                     id="tm-001",
                     name="John Doe",
                     role=RoleEnum.DEVELOPER,
-                    confidencePercentage=100.0,
                     vacations=[]
                 )
             ],
@@ -149,8 +150,10 @@ class TestCalculateCapacity:
         """Test capacity with confidence percentage"""
         sprint = Sprint(
             id="test-sprint",
-            sprintName="Test Sprint",
-            sprintDuration=5,
+            sprintNumber="25-02",
+            sprintName="Sprint 25-02",
+            sprintDuration=3,
+            confidencePercentage=80.0,  # 80% confidence at sprint level
             startDate=date(2025, 11, 26),
             endDate=date(2025, 11, 28),
             teamMembers=[
@@ -158,7 +161,6 @@ class TestCalculateCapacity:
                     id="tm-001",
                     name="John Doe",
                     role=RoleEnum.DEVELOPER,
-                    confidencePercentage=80.0,  # 80% confidence
                     vacations=[]
                 )
             ],
@@ -177,8 +179,10 @@ class TestCalculateCapacity:
         """Test capacity for multiple team members"""
         sprint = Sprint(
             id="test-sprint",
-            sprintName="Test Sprint",
-            sprintDuration=5,
+            sprintNumber="25-03",
+            sprintName="Sprint 25-03",
+            sprintDuration=3,
+            confidencePercentage=90.0,  # Sprint-level confidence
             startDate=date(2025, 11, 26),
             endDate=date(2025, 11, 28),
             teamMembers=[
@@ -186,14 +190,12 @@ class TestCalculateCapacity:
                     id="tm-001",
                     name="John Doe",
                     role=RoleEnum.DEVELOPER,
-                    confidencePercentage=100.0,
                     vacations=[]
                 ),
                 TeamMember(
                     id="tm-002",
                     name="Jane Smith",
                     role=RoleEnum.TESTER,
-                    confidencePercentage=90.0,
                     vacations=[]
                 )
             ],
@@ -206,14 +208,16 @@ class TestCalculateCapacity:
         
         assert capacity.teamSize == 2
         assert capacity.totalCapacityDays == 6.0  # 3 days * 2 people
-        assert capacity.adjustedTotalCapacity == 5.7  # (3 * 1.0) + (3 * 0.9)
+        assert capacity.adjustedTotalCapacity == 5.4  # 6 * 0.9 (sprint-level confidence)
     
     def test_member_with_vacation(self):
         """Test capacity with vacation"""
         sprint = Sprint(
             id="test-sprint",
-            sprintName="Test Sprint",
-            sprintDuration=5,
+            sprintNumber="25-04",
+            sprintName="Sprint 25-04",
+            sprintDuration=3,
+            confidencePercentage=100.0,
             startDate=date(2025, 11, 26),
             endDate=date(2025, 11, 28),
             teamMembers=[
@@ -221,7 +225,6 @@ class TestCalculateCapacity:
                     id="tm-001",
                     name="John Doe",
                     role=RoleEnum.DEVELOPER,
-                    confidencePercentage=100.0,
                     vacations=[
                         Vacation(
                             id="vac-001",
@@ -248,8 +251,10 @@ class TestCalculateCapacity:
         """Test capacity with public holiday"""
         sprint = Sprint(
             id="test-sprint",
-            sprintName="Test Sprint",
-            sprintDuration=5,
+            sprintNumber="25-05",
+            sprintName="Sprint 25-05",
+            sprintDuration=2,
+            confidencePercentage=100.0,
             startDate=date(2025, 11, 26),
             endDate=date(2025, 11, 28),
             teamMembers=[
@@ -257,7 +262,6 @@ class TestCalculateCapacity:
                     id="tm-001",
                     name="John Doe",
                     role=RoleEnum.DEVELOPER,
-                    confidencePercentage=100.0,
                     vacations=[]
                 )
             ],

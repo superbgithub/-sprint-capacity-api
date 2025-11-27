@@ -51,16 +51,48 @@ class Vacation(VacationInput):
         }
 
 
-class TeamMemberInput(BaseModel):
-    """Input model for creating/updating team members"""
+class TeamMemberBase(BaseModel):
+    """Base team member with shared details across all sprints"""
     name: str = Field(..., description="Full name of the team member")
     role: RoleEnum = Field(..., description="Role of the team member")
-    confidencePercentage: Optional[float] = Field(
-        100.0,
-        ge=0,
-        le=100,
-        description="Confidence percentage for capacity calculation (0-100)"
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "name": "John Doe",
+                "role": "Developer"
+            }
+        }
+
+
+class TeamMemberBaseWithId(TeamMemberBase):
+    """Team member base with ID"""
+    id: str = Field(..., description="Unique identifier for the team member")
+
+
+class SprintAssignmentInput(BaseModel):
+    """Input for assigning a team member to a sprint"""
+    teamMemberId: Optional[str] = Field(None, description="ID of existing team member, or None to create new")
+    name: Optional[str] = Field(None, description="Name (required if creating new team member)")
+    role: Optional[RoleEnum] = Field(None, description="Role (required if creating new team member)")
+    vacations: Optional[List[VacationInput]] = Field(
+        default_factory=list,
+        description="Vacation periods for this team member during the sprint"
     )
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "teamMemberId": "tm-001",
+                "vacations": []
+            }
+        }
+
+
+class TeamMemberInput(BaseModel):
+    """Input model for creating/updating team members (backward compatibility)"""
+    name: str = Field(..., description="Full name of the team member")
+    role: RoleEnum = Field(..., description="Role of the team member")
     vacations: Optional[List[VacationInput]] = Field(
         default_factory=list,
         description="Vacation periods for this team member during the sprint"
@@ -71,7 +103,6 @@ class TeamMemberInput(BaseModel):
             "example": {
                 "name": "John Doe",
                 "role": "Developer",
-                "confidencePercentage": 85.0,
                 "vacations": []
             }
         }
@@ -91,7 +122,6 @@ class TeamMember(TeamMemberInput):
                 "id": "tm-001",
                 "name": "John Doe",
                 "role": "Developer",
-                "confidencePercentage": 85.0,
                 "vacations": []
             }
         }
@@ -130,10 +160,15 @@ class Holiday(HolidayInput):
 
 class SprintInput(BaseModel):
     """Input model for creating/updating sprints"""
-    sprintName: str = Field(..., description="Name of the sprint")
-    sprintDuration: int = Field(..., ge=1, description="Duration of the sprint in days")
+    sprintNumber: str = Field(..., description="Sprint number in YY-NN format (e.g., '25-01' for Sprint 1 of 2025)")
     startDate: date = Field(..., description="Start date of the sprint")
     endDate: date = Field(..., description="End date of the sprint")
+    confidencePercentage: Optional[float] = Field(
+        100.0,
+        ge=0,
+        le=100,
+        description="Sprint-level confidence percentage for capacity forecasting (0-100)"
+    )
     teamMembers: List[TeamMemberInput] = Field(default_factory=list, description="List of team members")
     holidays: Optional[List[HolidayInput]] = Field(
         default_factory=list,
@@ -143,16 +178,14 @@ class SprintInput(BaseModel):
     class Config:
         json_schema_extra = {
             "example": {
-                "sprintName": "Sprint 2025-01",
-                "sprintDuration": 14,
+                "sprintNumber": "25-01",
                 "startDate": "2025-01-06",
                 "endDate": "2025-01-19",
+                "confidencePercentage": 85.0,
                 "teamMembers": [
                     {
                         "name": "John Doe",
-                        "role": "Developer",
-                        "email": "john.doe@example.com",
-                        "confidencePercentage": 85.0
+                        "role": "Developer"
                     }
                 ],
                 "holidays": []
@@ -163,6 +196,8 @@ class SprintInput(BaseModel):
 class Sprint(SprintInput):
     """Full sprint model with ID and timestamps"""
     id: str = Field(..., description="Unique identifier for the sprint")
+    sprintName: Optional[str] = Field(None, description="Full sprint name (auto-generated from sprintNumber)")
+    sprintDuration: int = Field(..., ge=1, description="Sprint duration in working days (auto-calculated)")
     teamMembers: List[TeamMember] = Field(..., description="List of team members")
     holidays: Optional[List[Holiday]] = Field(
         default_factory=list,
@@ -174,8 +209,9 @@ class Sprint(SprintInput):
     class Config:
         json_schema_extra = {
             "example": {
-                "id": "sprint-2025-01",
-                "sprintName": "Sprint 2025-01",
+                "id": "sprint-25-01",
+                "sprintNumber": "25-01",
+                "sprintName": "Sprint 25-01",
                 "sprintDuration": 14,
                 "startDate": "2025-01-06",
                 "endDate": "2025-01-19",

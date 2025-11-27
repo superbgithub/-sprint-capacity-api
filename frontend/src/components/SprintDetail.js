@@ -7,7 +7,7 @@ const SprintDetail = ({ sprint, onClose }) => {
     <div style={styles.overlay}>
       <div style={styles.modal}>
         <div style={styles.header}>
-          <h2>{sprint.sprintName}</h2>
+          <h2>{sprint.sprintName || `Sprint ${sprint.sprintNumber}`}</h2>
           <button onClick={onClose} style={styles.closeBtn}>×</button>
         </div>
 
@@ -15,6 +15,9 @@ const SprintDetail = ({ sprint, onClose }) => {
           <div style={styles.section}>
             <h3>Sprint Information</h3>
             <div style={styles.infoGrid}>
+              <div style={styles.infoItem}>
+                <strong>Sprint Number:</strong> {sprint.sprintNumber}
+              </div>
               <div style={styles.infoItem}>
                 <strong>Duration:</strong> {sprint.sprintDuration} days
               </div>
@@ -25,10 +28,30 @@ const SprintDetail = ({ sprint, onClose }) => {
                 <strong>End Date:</strong> {sprint.endDate}
               </div>
               <div style={styles.infoItem}>
+                <strong>Confidence:</strong> {sprint.confidencePercentage}%
+              </div>
+              <div style={styles.infoItem}>
                 <strong>Created:</strong> {new Date(sprint.createdAt).toLocaleString()}
               </div>
             </div>
           </div>
+
+          {sprint.holidays && sprint.holidays.length > 0 && (
+            <div style={styles.section}>
+              <h3>Sprint Holidays ({sprint.holidays.length})</h3>
+              <div style={styles.holidayList}>
+                {sprint.holidays.map((holiday) => (
+                  <div key={holiday.id} style={styles.holidayCard}>
+                    <div><strong>{holiday.holidayDate}</strong></div>
+                    <div>{holiday.name}</div>
+                    {holiday.description && (
+                      <div style={styles.description}>{holiday.description}</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div style={styles.section}>
             <h3>Team Members ({sprint.teamMembers.length})</h3>
@@ -39,9 +62,6 @@ const SprintDetail = ({ sprint, onClose }) => {
                   <span style={styles.roleBadge}>{member.role}</span>
                 </div>
                 <div style={styles.memberInfo}>
-                  <div>
-                    <strong>Confidence:</strong> {member.confidencePercentage}%
-                  </div>
                   {member.vacations && member.vacations.length > 0 && (
                     <div style={styles.vacations}>
                       <strong>Vacations:</strong>
@@ -59,23 +79,6 @@ const SprintDetail = ({ sprint, onClose }) => {
               </div>
             ))}
           </div>
-
-          {sprint.holidays && sprint.holidays.length > 0 && (
-            <div style={styles.section}>
-              <h3>Holidays ({sprint.holidays.length})</h3>
-              <div style={styles.holidayList}>
-                {sprint.holidays.map((holiday) => (
-                  <div key={holiday.id} style={styles.holidayCard}>
-                    <strong>{holiday.name}</strong>
-                    <span>{holiday.holidayDate}</span>
-                    {holiday.description && (
-                      <span style={styles.description}>{holiday.description}</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

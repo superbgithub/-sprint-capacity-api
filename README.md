@@ -83,7 +83,6 @@ curl -X POST "http://localhost:8000/v1/sprints" \
       {
         "name": "John Doe",
         "role": "Developer",
-        "email": "john.doe@example.com",
         "confidencePercentage": 85.0,
         "vacations": [
           {
@@ -92,12 +91,6 @@ curl -X POST "http://localhost:8000/v1/sprints" \
             "reason": "Personal leave"
           }
         ]
-      }
-    ],
-    "holidays": [
-      {
-        "date": "2025-01-01",
-        "name": "New Year Day"
       }
     ]
   }'
@@ -113,7 +106,7 @@ curl -X GET "http://localhost:8000/v1/sprints/{sprintId}/capacity"
 
 The capacity is calculated using the following logic:
 
-1. **Working Days**: Count weekdays between sprint start and end dates, excluding weekends (Sat/Sun) and holidays
+1. **Working Days**: Count weekdays between sprint start and end dates, excluding weekends (Sat/Sun)
 2. **Available Days**: For each team member, subtract their vacation days from total working days
 3. **Adjusted Capacity**: Apply confidence percentage: `availableDays * (confidencePercentage / 100)`
 4. **Total Capacity**: Sum all team members' adjusted capacity
@@ -126,7 +119,7 @@ To modify the formula, edit the `calculate_capacity()` function in that file.
 
 ## Data Storage
 
-This POC uses **in-memory storage** (Python dictionary) for simplicity. Data will be lost when the server restarts.
+This application uses **PostgreSQL** for persistent data storage. Data is preserved across server restarts. The database runs in a Docker container and uses SQLAlchemy ORM with async support.
 
 For production, replace `app/services/database.py` with a real database:
 - PostgreSQL (with SQLAlchemy)
@@ -284,6 +277,40 @@ docker run -d -p 8000:8000 --name sprint-api sprint-capacity-api
 curl http://localhost:8000/health
 ```
 
+## Event-Driven Architecture
+
+The API publishes domain events to Kafka for event-driven integration:
+
+### Event Topics
+
+- **`sprint.lifecycle`** - Sprint creation and deletion events
+- **`sprint.team-members`** - Team member addition and update events
+
+### Quick Start
+
+```powershell
+# Start Kafka
+docker-compose up zookeeper kafka
+
+# Run event consumer (in another terminal)
+python examples/simple_consumer.py
+
+# Start API
+uvicorn app.main:app --reload
+```
+
+See [Kafka Events Documentation](docs/KAFKA_EVENTS.md) for:
+- Event schemas
+- Consumer examples (Python, Node.js)
+- Integration patterns
+- Production setup
+
+**Use Cases:**
+- 📧 Send email notifications to team members
+- 📊 Update analytics dashboards in real-time
+- 🔄 Sync with external tools (JIRA, Slack, etc.)
+- 📝 Maintain audit trails and event sourcing
+
 ## Project Status
 
 1. ✅ API specification created (OpenAPI 3.0)
@@ -293,5 +320,6 @@ curl http://localhost:8000/health
 5. ✅ CI/CD pipeline (GitHub Actions)
 6. ✅ Docker containerization
 7. ✅ Monitoring and observability (Prometheus + Grafana)
-8. ⏳ Production deployment (pending)
-9. ⏳ Blue/green deployment (paused)
+8. ✅ Event-driven architecture (Kafka integration)
+9. ⏳ Production deployment (pending)
+10. ⏳ Blue/green deployment (paused)

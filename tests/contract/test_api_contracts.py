@@ -17,15 +17,14 @@ class TestSprintAPIContract:
     def test_create_sprint_request_schema(self):
         """Test POST /sprints accepts valid request schema"""
         valid_request = {
-            "sprintName": "Contract Test Sprint",
-            "sprintDuration": 14,
+            "sprintNumber": "25-01",
             "startDate": "2025-11-26",
             "endDate": "2025-12-09",
+            "confidencePercentage": 85.0,
             "teamMembers": [
                 {
                     "name": "John Doe",
                     "role": "Developer",
-                    "confidencePercentage": 85.0,
                     "vacations": []
                 }
             ],
@@ -44,8 +43,10 @@ class TestSprintAPIContract:
         
         # Validate response schema
         assert "id" in data
+        assert "sprintNumber" in data
         assert "sprintName" in data
         assert "sprintDuration" in data
+        assert "confidencePercentage" in data
         assert "startDate" in data
         assert "endDate" in data
         assert "teamMembers" in data
@@ -56,11 +57,11 @@ class TestSprintAPIContract:
     def test_create_sprint_missing_required_field(self):
         """Test POST /sprints rejects missing required fields"""
         invalid_request = {
-            "sprintName": "Test Sprint",
-            # Missing sprintDuration
+            # Missing sprintNumber
             "startDate": "2025-11-26",
             "endDate": "2025-12-09",
-            "teamMembers": []
+            "teamMembers": [],
+            "holidays": []
         }
         
         response = client.post("/v1/sprints", json=invalid_request)
@@ -70,16 +71,17 @@ class TestSprintAPIContract:
     def test_create_sprint_invalid_date_format(self):
         """Test POST /sprints rejects invalid date format"""
         invalid_request = {
-            "sprintName": "Test Sprint",
-            "sprintDuration": 14,
+            "sprintNumber": "25-02",
             "startDate": "26-11-2025",  # Wrong format
             "endDate": "2025-12-09",
             "teamMembers": [
                 {
                     "name": "John Doe",
-                    "role": "Developer"
+                    "role": "Developer",
+                    "vacations": []
                 }
-            ]
+            ],
+            "holidays": []
         }
         
         response = client.post("/v1/sprints", json=invalid_request)
@@ -89,16 +91,17 @@ class TestSprintAPIContract:
     def test_create_sprint_invalid_role(self):
         """Test POST /sprints rejects invalid role"""
         invalid_request = {
-            "sprintName": "Test Sprint",
-            "sprintDuration": 14,
+            "sprintNumber": "25-03",
             "startDate": "2025-11-26",
             "endDate": "2025-12-09",
             "teamMembers": [
                 {
                     "name": "John Doe",
-                    "role": "InvalidRole"  # Not in enum
+                    "role": "InvalidRole",  # Not in enum
+                    "vacations": []
                 }
-            ]
+            ],
+            "holidays": []
         }
         
         response = client.post("/v1/sprints", json=invalid_request)
@@ -108,17 +111,18 @@ class TestSprintAPIContract:
     def test_create_sprint_confidence_out_of_range(self):
         """Test POST /sprints rejects confidence % outside 0-100"""
         invalid_request = {
-            "sprintName": "Test Sprint",
-            "sprintDuration": 14,
+            "sprintNumber": "25-04",
             "startDate": "2025-11-26",
             "endDate": "2025-12-09",
+            "confidencePercentage": 150.0,  # > 100
             "teamMembers": [
                 {
                     "name": "John Doe",
                     "role": "Developer",
-                    "confidencePercentage": 150.0  # > 100
+                    "vacations": []
                 }
-            ]
+            ],
+            "holidays": []
         }
         
         response = client.post("/v1/sprints", json=invalid_request)
@@ -138,11 +142,12 @@ class TestSprintAPIContract:
         """Test GET /sprints/{id} returns sprint object"""
         # First create a sprint
         create_response = client.post("/v1/sprints", json={
-            "sprintName": "Test Sprint",
-            "sprintDuration": 14,
+            "sprintNumber": "25-05",
             "startDate": "2025-11-26",
             "endDate": "2025-12-09",
-            "teamMembers": [{"name": "John", "role": "Developer"}]
+            "confidencePercentage": 85.0,
+            "teamMembers": [{"name": "John", "role": "Developer", "vacations": []}],
+            "holidays": []
         })
         sprint_id = create_response.json()["id"]
         
@@ -171,15 +176,15 @@ class TestSprintAPIContract:
         """Test GET /sprints/{id}/capacity returns capacity summary"""
         # Create a sprint
         create_response = client.post("/v1/sprints", json={
-            "sprintName": "Test Sprint",
-            "sprintDuration": 14,
+            "sprintNumber": "25-12",
             "startDate": "2025-11-26",
             "endDate": "2025-12-09",
+            "confidencePercentage": 85.0,
             "teamMembers": [
                 {
                     "name": "John Doe",
                     "role": "Developer",
-                    "confidencePercentage": 85.0
+                    "vacations": []
                 }
             ],
             "holidays": []
@@ -208,38 +213,42 @@ class TestSprintAPIContract:
         """Test PUT /sprints/{id} returns updated sprint"""
         # Create a sprint
         create_response = client.post("/v1/sprints", json={
-            "sprintName": "Original Sprint",
-            "sprintDuration": 14,
+            "sprintNumber": "25-13",
             "startDate": "2025-11-26",
             "endDate": "2025-12-09",
-            "teamMembers": [{"name": "John", "role": "Developer"}]
+            "confidencePercentage": 100.0,
+            "teamMembers": [{"name": "John", "role": "Developer", "vacations": []}],
+            "holidays": []
         })
         sprint_id = create_response.json()["id"]
         
         # Update it
         update_response = client.put(f"/v1/sprints/{sprint_id}", json={
-            "sprintName": "Updated Sprint",
-            "sprintDuration": 10,
+            "sprintNumber": "25-14",
             "startDate": "2025-12-01",
             "endDate": "2025-12-10",
-            "teamMembers": [{"name": "Jane", "role": "Tester"}]
+            "confidencePercentage": 95.0,
+            "teamMembers": [{"name": "Jane", "role": "Tester", "vacations": []}],
+            "holidays": []
         })
         
         assert update_response.status_code == 200
         data = update_response.json()
         
         assert data["id"] == sprint_id
-        assert data["sprintName"] == "Updated Sprint"
+        assert data["sprintNumber"] == "25-14"
+        assert data["sprintName"] == "Sprint 25-14"
     
     def test_delete_sprint_response(self):
         """Test DELETE /sprints/{id} returns 204"""
         # Create a sprint
         create_response = client.post("/v1/sprints", json={
-            "sprintName": "Test Sprint",
-            "sprintDuration": 14,
+            "sprintNumber": "25-15",
             "startDate": "2025-11-26",
             "endDate": "2025-12-09",
-            "teamMembers": [{"name": "John", "role": "Developer"}]
+            "confidencePercentage": 100.0,
+            "teamMembers": [{"name": "John", "role": "Developer", "vacations": []}],
+            "holidays": []
         })
         sprint_id = create_response.json()["id"]
         

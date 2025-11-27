@@ -18,7 +18,7 @@ The app will open at http://localhost:3000
 
 ## Features
 
-- Create sprints with team members, holidays, and vacations
+- Create sprints with team members and vacations
 - View all sprints
 - Calculate and display capacity for each sprint
 - Real-time capacity calculations

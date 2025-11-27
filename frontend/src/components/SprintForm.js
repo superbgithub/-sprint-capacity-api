@@ -2,15 +2,15 @@ import React, { useState } from 'react';
 
 const SprintForm = ({ onSprintCreated }) => {
   const [formData, setFormData] = useState({
-    sprintName: '',
-    sprintDuration: 14,
+    sprintNumber: '',
     startDate: '',
     endDate: '',
-    teamMembers: [{ name: '', role: 'Developer', confidencePercentage: 100, vacations: [] }],
+    confidencePercentage: 100,
+    teamMembers: [{ name: '', role: 'Developer', vacations: [] }],
     holidays: [],
   });
 
-  const [newHoliday, setNewHoliday] = useState({ holidayDate: '', name: '' });
+  const [newHoliday, setNewHoliday] = useState({ holidayDate: '', name: '', description: '' });
   const [newVacation, setNewVacation] = useState({ memberIndex: 0, startDate: '', endDate: '', reason: '' });
 
   const roles = ['Developer', 'Tester', 'Designer', 'Product Owner', 'Scrum Master', 'Tech Lead'];
@@ -28,7 +28,7 @@ const SprintForm = ({ onSprintCreated }) => {
   const addTeamMember = () => {
     setFormData({
       ...formData,
-      teamMembers: [...formData.teamMembers, { name: '', role: 'Developer', confidencePercentage: 100, vacations: [] }],
+      teamMembers: [...formData.teamMembers, { name: '', role: 'Developer', vacations: [] }],
     });
   };
 
@@ -43,7 +43,7 @@ const SprintForm = ({ onSprintCreated }) => {
         ...formData,
         holidays: [...formData.holidays, newHoliday],
       });
-      setNewHoliday({ holidayDate: '', name: '' });
+      setNewHoliday({ holidayDate: '', name: '', description: '' });
     }
   };
 
@@ -51,6 +51,8 @@ const SprintForm = ({ onSprintCreated }) => {
     const updatedHolidays = formData.holidays.filter((_, i) => i !== index);
     setFormData({ ...formData, holidays: updatedHolidays });
   };
+
+
 
   const addVacation = () => {
     if (newVacation.startDate && newVacation.endDate) {
@@ -71,11 +73,11 @@ const SprintForm = ({ onSprintCreated }) => {
       await onSprintCreated(formData);
       // Reset form
       setFormData({
-        sprintName: '',
-        sprintDuration: 14,
+        sprintNumber: '',
         startDate: '',
         endDate: '',
-        teamMembers: [{ name: '', role: 'Developer', confidencePercentage: 100, vacations: [] }],
+        confidencePercentage: 100,
+        teamMembers: [{ name: '', role: 'Developer', vacations: [] }],
         holidays: [],
       });
       alert('Sprint created successfully!');
@@ -89,28 +91,20 @@ const SprintForm = ({ onSprintCreated }) => {
       <h2>Create New Sprint</h2>
       <form onSubmit={handleSubmit} style={styles.form}>
         <div style={styles.formGroup}>
-          <label>Sprint Name:</label>
+          <label>Sprint Number (YY-NN):</label>
           <input
             type="text"
-            name="sprintName"
-            value={formData.sprintName}
+            name="sprintNumber"
+            value={formData.sprintNumber}
             onChange={handleChange}
+            placeholder="e.g., 25-01"
             required
             style={styles.input}
+            maxLength="5"
           />
-        </div>
-
-        <div style={styles.formGroup}>
-          <label>Sprint Duration (days):</label>
-          <input
-            type="number"
-            name="sprintDuration"
-            value={formData.sprintDuration}
-            onChange={handleChange}
-            required
-            min="1"
-            style={styles.input}
-          />
+          <small style={{ fontSize: '12px', color: '#666', marginTop: '4px', display: 'block' }}>
+            Format: YY-NN (e.g., 25-01 for Sprint 1 of 2025)
+          </small>
         </div>
 
         <div style={styles.formRow}>
@@ -137,6 +131,23 @@ const SprintForm = ({ onSprintCreated }) => {
               style={styles.input}
             />
           </div>
+        </div>
+
+        <div style={styles.formGroup}>
+          <label>Sprint Confidence %:</label>
+          <input
+            type="number"
+            name="confidencePercentage"
+            value={formData.confidencePercentage}
+            onChange={handleChange}
+            min="0"
+            max="100"
+            step="0.1"
+            style={styles.input}
+          />
+          <small style={{ fontSize: '12px', color: '#666', marginTop: '4px', display: 'block' }}>
+            Overall confidence for sprint capacity forecasting (0-100%)
+          </small>
         </div>
 
         <h3>Team Members</h3>
@@ -167,18 +178,6 @@ const SprintForm = ({ onSprintCreated }) => {
                     </option>
                   ))}
                 </select>
-              </div>
-
-              <div style={styles.formGroup}>
-                <label>Confidence %:</label>
-                <input
-                  type="number"
-                  value={member.confidencePercentage}
-                  onChange={(e) => handleTeamMemberChange(index, 'confidencePercentage', parseFloat(e.target.value))}
-                  min="0"
-                  max="100"
-                  style={styles.input}
-                />
               </div>
 
               <button type="button" onClick={() => removeTeamMember(index)} style={styles.removeBtn}>
@@ -255,19 +254,29 @@ const SprintForm = ({ onSprintCreated }) => {
           </button>
         </div>
 
-        <h3>Holidays</h3>
-        {formData.holidays.map((holiday, index) => (
-          <div key={index} style={styles.holidayItem}>
-            {holiday.holidayDate} - {holiday.name}
-            <button type="button" onClick={() => removeHoliday(index)} style={styles.removeBtn}>
-              Remove
-            </button>
+        <h3>Sprint Holidays</h3>
+        {formData.holidays.length > 0 && (
+          <div style={styles.vacationsList}>
+            {formData.holidays.map((holiday, idx) => (
+              <div key={idx} style={styles.vacationItem}>
+                <strong>{holiday.holidayDate}</strong>: {holiday.name}
+                {holiday.description && ` - ${holiday.description}`}
+                <button
+                  type="button"
+                  onClick={() => removeHoliday(idx)}
+                  style={{ ...styles.removeBtn, marginLeft: '10px' }}
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
           </div>
-        ))}
+        )}
 
+        <h4>Add Holiday</h4>
         <div style={styles.formRow}>
           <div style={styles.formGroup}>
-            <label>Holiday Date:</label>
+            <label>Date:</label>
             <input
               type="date"
               value={newHoliday.holidayDate}
@@ -277,12 +286,24 @@ const SprintForm = ({ onSprintCreated }) => {
           </div>
 
           <div style={styles.formGroup}>
-            <label>Holiday Name:</label>
+            <label>Name:</label>
             <input
               type="text"
               value={newHoliday.name}
               onChange={(e) => setNewHoliday({ ...newHoliday, name: e.target.value })}
               style={styles.input}
+              placeholder="e.g., Christmas"
+            />
+          </div>
+
+          <div style={styles.formGroup}>
+            <label>Description (optional):</label>
+            <input
+              type="text"
+              value={newHoliday.description}
+              onChange={(e) => setNewHoliday({ ...newHoliday, description: e.target.value })}
+              style={styles.input}
+              placeholder="e.g., Public holiday"
             />
           </div>
 

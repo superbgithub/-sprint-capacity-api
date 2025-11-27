@@ -18,6 +18,7 @@ from app.observability.metrics import (
     track_error,
     http_requests_in_progress
 )
+from app.observability.alerts import get_alert_manager
 
 logger = get_logger(__name__)
 
@@ -70,6 +71,11 @@ class ObservabilityMiddleware(BaseHTTPMiddleware):
             # Track metrics
             track_request_metrics(method, endpoint, response.status_code, duration)
             
+            # Record for alerting (5xx = error)
+            alert_manager = get_alert_manager()
+            is_error = response.status_code >= 500
+            alert_manager.record_request(is_error, duration * 1000)
+            
             # Add request ID to response headers
             response.headers['X-Request-ID'] = request_id
             
@@ -94,6 +100,10 @@ class ObservabilityMiddleware(BaseHTTPMiddleware):
             error_type = type(exc).__name__
             track_error(error_type, endpoint)
             track_request_metrics(method, endpoint, 500, duration)
+            
+            # Record for alerting (exception = error)
+            alert_manager = get_alert_manager()
+            alert_manager.record_request(is_error=True, duration_ms=duration * 1000)
             
             # Log error
             log_with_context(

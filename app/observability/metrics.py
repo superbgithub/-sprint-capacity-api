@@ -48,6 +48,11 @@ sprint_capacity_calculations_total = Counter(
     'Total number of sprint capacity calculations performed'
 )
 
+team_members_added_total = Counter(
+    'team_members_added_total',
+    'Total number of team members added across all sprints'
+)
+
 # Error metrics
 errors_total = Counter(
     'errors_total',
@@ -76,6 +81,43 @@ database_connections = Gauge(
 app_info = Info(
     'sprint_capacity_api',
     'Sprint Capacity Management API information'
+)
+
+# Health check metrics
+system_cpu_percent = Gauge(
+    'system_cpu_percent',
+    'Current CPU usage percentage'
+)
+
+system_memory_percent = Gauge(
+    'system_memory_percent',
+    'Current memory usage percentage'
+)
+
+system_memory_used_mb = Gauge(
+    'system_memory_used_mb',
+    'Current memory used in megabytes'
+)
+
+system_memory_available_mb = Gauge(
+    'system_memory_available_mb',
+    'Current memory available in megabytes'
+)
+
+system_disk_percent = Gauge(
+    'system_disk_percent',
+    'Current disk usage percentage'
+)
+
+system_uptime_seconds = Gauge(
+    'system_uptime_seconds',
+    'Application uptime in seconds'
+)
+
+health_check_status = Gauge(
+    'health_check_status',
+    'Health check status (1=healthy, 0=unhealthy)',
+    ['check_type']
 )
 
 

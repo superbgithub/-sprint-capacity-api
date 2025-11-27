@@ -7,8 +7,22 @@ from fastapi import APIRouter, HTTPException, status, Query
 from datetime import date
 
 from app.models.schemas import Sprint, SprintInput, ErrorResponse, CapacitySummary
-from app.services.database import db
+from app.services.database import get_database
 from app.services.capacity_service import calculate_capacity
+from app.observability.metrics import (
+    sprints_created_total,
+    sprints_updated_total,
+    sprints_deleted_total,
+    sprint_capacity_calculations_total,
+    team_members_added_total,
+    active_sprints
+)
+from app.events import (
+    publish_team_member_added_event,
+    publish_team_member_updated_event,
+    publish_sprint_created_event,
+    publish_sprint_deleted_event
+)
 
 router = APIRouter(prefix="/sprints", tags=["Sprints"])
 
@@ -30,7 +44,10 @@ async def get_sprints(
     - startDate: Only return sprints that start on or after this date
     - endDate: Only return sprints that end on or before this date
     """
-    sprints = db.get_all_sprints()
+    sprints = await get_database().get_all_sprints()
+    
+    # Update active sprints metric
+    active_sprints.set(len(sprints))
     
     # Apply filters if provided
     if startDate:
@@ -70,7 +87,32 @@ async def create_sprint(sprint_input: SprintInput):
             }
         )
     
-    sprint = db.create_sprint(sprint_input)
+    sprint = await get_database().create_sprint(sprint_input)
+    
+    # Track sprint creation in metrics
+    sprints_created_total.inc()
+    team_members_added_total.inc(len(sprint_input.teamMembers))
+    active_sprints.set(len(await get_database().get_all_sprints()))
+    
+    # Publish events to Kafka
+    await publish_sprint_created_event(
+        sprint_id=sprint.id,
+        sprint_name=sprint.sprintName,
+        sprint_number=sprint.sprintNumber,
+        team_members_count=len(sprint.teamMembers),
+        start_date=sprint.startDate,
+        end_date=sprint.endDate,
+        sprint_duration=sprint.sprintDuration,
+        confidence_percentage=sprint.confidencePercentage
+    )
+    
+    if sprint.teamMembers:
+        await publish_team_member_added_event(
+            sprint_id=sprint.id,
+            sprint_name=sprint.sprintName,
+            team_members=sprint.teamMembers
+        )
+    
     return sprint
 
 
@@ -86,7 +128,7 @@ async def get_sprint_by_id(sprintId: str):
     
     Returns 404 if the sprint is not found.
     """
-    sprint = db.get_sprint(sprintId)
+    sprint = await get_database().get_sprint_by_id(sprintId)
     
     if not sprint:
         raise HTTPException(
@@ -125,7 +167,7 @@ async def update_sprint(sprintId: str, sprint_input: SprintInput):
             }
         )
     
-    sprint = db.update_sprint(sprintId, sprint_input)
+    sprint = await get_database().update_sprint(sprintId, sprint_input)
     
     if not sprint:
         raise HTTPException(
@@ -135,6 +177,18 @@ async def update_sprint(sprintId: str, sprint_input: SprintInput):
                 "message": "Sprint not found",
                 "details": f"No sprint found with ID: {sprintId}"
             }
+        )
+    
+    # Track sprint update in metrics
+    sprints_updated_total.inc()
+    team_members_added_total.inc(len(sprint_input.teamMembers))
+    
+    # Publish team member update event to Kafka
+    if sprint.teamMembers:
+        await publish_team_member_updated_event(
+            sprint_id=sprint.id,
+            sprint_name=sprint.sprintName,
+            team_members=sprint.teamMembers
         )
     
     return sprint
@@ -153,7 +207,7 @@ async def delete_sprint(sprintId: str):
     Returns 204 No Content on success.
     Returns 404 if the sprint is not found.
     """
-    success = db.delete_sprint(sprintId)
+    success = await get_database().delete_sprint(sprintId)
     
     if not success:
         raise HTTPException(
@@ -164,6 +218,13 @@ async def delete_sprint(sprintId: str):
                 "details": f"No sprint found with ID: {sprintId}"
             }
         )
+    
+    # Track sprint deletion in metrics
+    sprints_deleted_total.inc()
+    active_sprints.set(len(await get_database().get_all_sprints()))
+    
+    # Publish sprint deletion event to Kafka
+    await publish_sprint_deleted_event(sprint_id=sprintId)
     
     return None
 
@@ -188,7 +249,7 @@ async def get_sprint_capacity(sprintId: str):
     
     Returns 404 if the sprint is not found.
     """
-    sprint = db.get_sprint(sprintId)
+    sprint = await get_database().get_sprint_by_id(sprintId)
     
     if not sprint:
         raise HTTPException(
@@ -201,4 +262,8 @@ async def get_sprint_capacity(sprintId: str):
         )
     
     capacity_summary = calculate_capacity(sprint)
+    
+    # Track capacity calculation in metrics
+    sprint_capacity_calculations_total.inc()
+    
     return capacity_summary

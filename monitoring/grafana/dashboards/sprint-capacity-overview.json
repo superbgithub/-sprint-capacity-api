@@ -1,7 +1,6 @@
 {
-  "dashboard": {
-    "title": "Sprint Capacity API - Overview",
-    "tags": ["sprint-capacity", "api", "monitoring"],
+  "title": "Sprint Capacity API - Overview",
+  "tags": ["sprint-capacity", "api", "monitoring"],
     "timezone": "browser",
     "refresh": "10s",
     "time": {
@@ -227,9 +226,201 @@
             ]
           }
         }
+      },
+      {
+        "id": 13,
+        "title": "System Health - CPU Usage",
+        "type": "gauge",
+        "gridPos": {"h": 8, "w": 6, "x": 0, "y": 28},
+        "targets": [
+          {
+            "expr": "system_cpu_percent",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 60, "color": "yellow"},
+                {"value": 80, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 14,
+        "title": "System Health - Memory Usage",
+        "type": "gauge",
+        "gridPos": {"h": 8, "w": 6, "x": 6, "y": 28},
+        "targets": [
+          {
+            "expr": "system_memory_percent",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 60, "color": "yellow"},
+                {"value": 80, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 15,
+        "title": "System Health - Disk Usage",
+        "type": "gauge",
+        "gridPos": {"h": 8, "w": 6, "x": 12, "y": 28},
+        "targets": [
+          {
+            "expr": "system_disk_percent",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 60, "color": "yellow"},
+                {"value": 80, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 16,
+        "title": "Application Uptime",
+        "type": "stat",
+        "gridPos": {"h": 8, "w": 6, "x": 18, "y": 28},
+        "targets": [
+          {
+            "expr": "system_uptime_seconds / 3600",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "graphMode": "none",
+          "colorMode": "value",
+          "textMode": "value_and_name"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "h",
+            "decimals": 2
+          }
+        }
+      },
+      {
+        "id": 17,
+        "title": "Health Check Status",
+        "type": "stat",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 36},
+        "targets": [
+          {
+            "expr": "health_check_status{check_type=\"detailed\"}",
+            "legendFormat": "Detailed Health",
+            "refId": "A"
+          },
+          {
+            "expr": "health_check_status{check_type=\"ready\"}",
+            "legendFormat": "Readiness",
+            "refId": "B"
+          },
+          {
+            "expr": "health_check_status{check_type=\"live\"}",
+            "legendFormat": "Liveness",
+            "refId": "C"
+          }
+        ],
+        "options": {
+          "graphMode": "none",
+          "colorMode": "background",
+          "textMode": "value_and_name",
+          "orientation": "horizontal"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [
+              {
+                "type": "value",
+                "options": {
+                  "1": {
+                    "text": "Healthy",
+                    "color": "green"
+                  },
+                  "0": {
+                    "text": "Unhealthy",
+                    "color": "red"
+                  }
+                }
+              }
+            ],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 1, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 18,
+        "title": "Memory Usage Over Time",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 36},
+        "targets": [
+          {
+            "expr": "system_memory_used_mb",
+            "legendFormat": "Used MB",
+            "refId": "A"
+          },
+          {
+            "expr": "system_memory_available_mb",
+            "legendFormat": "Available MB",
+            "refId": "B"
+          }
+        ],
+        "yaxes": [
+          {"format": "decmbytes", "label": "Memory"},
+          {"format": "short"}
+        ]
       }
     ],
-    "schemaVersion": 38,
-    "version": 1
-  }
+  "schemaVersion": 38,
+  "version": 1
 }

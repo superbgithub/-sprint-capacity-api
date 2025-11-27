@@ -10,6 +10,8 @@ Then open http://localhost:8089 to configure and start the load test.
 from locust import HttpUser, task, between, events
 import json
 import random
+import time
+import uuid
 
 
 class SprintAPIUser(HttpUser):
@@ -59,8 +61,11 @@ class SprintAPIUser(HttpUser):
             }
         ]
         
+        # Generate unique sprint number using timestamp + random to avoid collisions
+        unique_id = str(uuid.uuid4())[:6]  # First 6 chars of UUID
+        
         return {
-            "sprintNumber": f"25-{random.randint(400, 999)}",
+            "sprintNumber": f"25-{unique_id}",
             "startDate": "2025-12-01",
             "endDate": "2025-12-20",
             "confidencePercentage": random.uniform(70.0, 100.0),
@@ -179,8 +184,10 @@ class CapacityHeavyUser(HttpUser):
         
         for i in range(5):
             # Create sprints with many team members for complex calculations
+            # Use UUID to ensure uniqueness across all concurrent users
+            unique_id = str(uuid.uuid4())[:6]
             sprint_data = {
-                "sprintNumber": f"25-{500+i}",
+                "sprintNumber": f"25-{unique_id}",
                 "startDate": "2025-12-01",
                 "endDate": "2025-12-14",
                 "confidencePercentage": random.uniform(75.0, 95.0),

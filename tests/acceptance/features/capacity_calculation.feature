@@ -24,7 +24,7 @@ Feature: Capacity Calculation
     Given a sprint exists from "2025-12-01" to "2025-12-14" with 2 team members
     And one team member has vacation from "2025-12-05" to "2025-12-06"
     When I request the capacity calculation
-    Then the total capacity should be 18 days
+    Then the total capacity should be 19 days
 
   Scenario: Calculate capacity with holidays
     Given a sprint exists from "2025-12-01" to "2025-12-14" with 3 team members
@@ -35,7 +35,7 @@ Feature: Capacity Calculation
 
   Scenario: Calculate capacity with both vacations and holidays
     Given a sprint exists from "2025-12-01" to "2025-12-20" with 3 team members
-    And one team member has vacation from "2025-12-05" to "2025-12-06"
+    And one team member has vacation from "2025-12-08" to "2025-12-09"
     And the sprint has a holiday on "2025-12-10"
     When I request the capacity calculation
     Then the total capacity should be correctly calculated

@@ -8,6 +8,12 @@ from pytest_bdd import scenarios, given, when, then, parsers
 scenarios('../features/validation_and_errors.feature')
 
 
+@given('the API is running')
+def api_running(test_client):
+    """Ensure API is accessible."""
+    pass
+
+
 @when('I create a sprint without a sprint number')
 def create_without_sprint_number(context, test_client):
     """Try to create sprint without sprint number."""

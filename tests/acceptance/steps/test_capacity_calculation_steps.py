@@ -339,6 +339,12 @@ def verify_capacity_calculation(context):
     assert context['capacity_data']['totalCapacityDays'] > 0
 
 
+@then(parsers.parse('the request should fail with status code {status_code:d}'))
+def verify_error_status(context, status_code):
+    """Verify error status code."""
+    assert context['response'].status_code == status_code
+
+
 @then(parsers.parse('all team members should lose {days:d} working days'))
 def verify_holiday_impact(context, days):
     """Verify holidays affect all members."""

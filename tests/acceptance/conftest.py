@@ -24,6 +24,9 @@ def test_db():
     Database fixture - assumes schema is already initialized.
     In CI/CD, scripts/init_test_db.py runs before tests.
     Locally, run: python scripts/init_test_db.py
+    
+    Note: Database cleanup is handled by individual tests or test client teardown
+    to ensure proper isolation between acceptance test scenarios.
     """
     # Schema is pre-initialized, no need to create/drop here
     yield

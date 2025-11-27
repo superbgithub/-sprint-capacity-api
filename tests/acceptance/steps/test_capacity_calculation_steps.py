@@ -4,8 +4,7 @@ Pytest-BDD step definitions for capacity calculation acceptance tests.
 import pytest
 from pytest_bdd import scenarios, given, when, then, parsers
 from datetime import datetime, date
-
-# Load all scenarios from the feature file
+import uuid# Load all scenarios from the feature file
 scenarios('../features/capacity_calculation.feature')
 
 
@@ -26,7 +25,7 @@ def clean_database(test_db):
 def sprint_with_details(context, test_client, start_date, end_date, count):
     """Create sprint with specified details and team members."""
     context['sprint_data'] = {
-        "sprintNumber": f"25-{600+count}",
+        "sprintNumber": f"25-{str(uuid.uuid4())[:8]}",
         "startDate": start_date,
         "endDate": end_date,
         "confidencePercentage": 80.0,
@@ -69,8 +68,8 @@ def add_vacation_to_first_member(context, test_client, start_date, end_date):
 @given(parsers.parse('a sprint runs from Monday "{start_date}" to Sunday "{end_date}"'))
 def sprint_with_date_range(context, test_client, start_date, end_date):
     """Create sprint with specific date range."""
-    sprint_data = {
-        "sprintNumber": "25-602",
+    context['sprint_data'] = {
+        "sprintNumber": f"25-{str(uuid.uuid4())[:8]}",
         "startDate": start_date,
         "endDate": end_date,
         "confidencePercentage": 80.0,
@@ -80,7 +79,7 @@ def sprint_with_date_range(context, test_client, start_date, end_date):
         ],
         "holidays": []
     }
-    response = test_client.post("/v1/sprints", json=sprint_data)
+    response = test_client.post("/v1/sprints", json=context['sprint_data'])
     assert response.status_code == 201
     context['sprint_id'] = response.json()["id"]
 
@@ -99,7 +98,7 @@ def sprint_with_member_count(context, test_client, count):
 def create_sprint_date_range(context, test_client, start_date, end_date):
     """Create sprint with date range."""
     context['sprint_data'] = {
-        "sprintNumber": "25-603",
+        "sprintNumber": f"25-{str(uuid.uuid4())[:8]}",
         "startDate": start_date,
         "endDate": end_date,
         "confidencePercentage": 80.0,
@@ -157,7 +156,7 @@ def add_single_holiday(context, holiday_date):
 def sprint_with_confidence(context, test_client, percentage):
     """Create sprint with specific confidence."""
     sprint_data = {
-        "sprintNumber": "25-604",
+        "sprintNumber": f"25-{str(uuid.uuid4())[:8]}",
         "startDate": "2025-12-01",
         "endDate": "2025-12-14",
         "confidencePercentage": percentage,
@@ -201,7 +200,7 @@ def second_vacation(context, test_client):
         "endDate": "2025-12-12"
     })
     
-    context['sprint_data']['sprintNumber'] = "25-605"
+    context['sprint_data']['sprintNumber'] = f"25-{str(uuid.uuid4())[:8]}"
     response = test_client.post("/v1/sprints", json=context['sprint_data'])
     assert response.status_code == 201
     context['sprint_id'] = response.json()["id"]
@@ -215,7 +214,7 @@ def multiple_holidays(context, test_client):
         {"holidayDate": "2025-12-11", "name": "Holiday 2"}
     ]
     
-    context['sprint_data']['sprintNumber'] = "25-606"
+    context['sprint_data']['sprintNumber'] = f"25-{str(uuid.uuid4())[:8]}"
     context['sprint_data']['teamMembers'] = [
         {"name": f"Member {i}", "role": "Developer", "vacations": []}
         for i in range(5)
@@ -242,7 +241,7 @@ def full_sprint_vacation(context, test_client):
         }
     ]
     
-    context['sprint_data']['sprintNumber'] = "25-607"
+    context['sprint_data']['sprintNumber'] = f"25-{str(uuid.uuid4())[:8]}"
     response = test_client.post("/v1/sprints", json=context['sprint_data'])
     assert response.status_code == 201
     context['sprint_id'] = response.json()["id"]
@@ -253,7 +252,7 @@ def request_capacity(context, test_client):
     """Request capacity calculation."""
     # Create sprint if not already created
     if 'sprint_id' not in context:
-        context['sprint_data']['sprintNumber'] = context['sprint_data'].get('sprintNumber', '25-608')
+        context['sprint_data']['sprintNumber'] = context['sprint_data'].get('sprintNumber', f"25-{str(uuid.uuid4())[:8]}")
         response = test_client.post("/v1/sprints", json=context['sprint_data'])
         assert response.status_code == 201
         context['sprint_id'] = response.json()["id"]
@@ -280,7 +279,7 @@ def verify_total_capacity(context, expected):
 def verify_member_capacity(context, expected):
     """Verify each member's capacity."""
     for member in context['capacity_data']['memberCapacity']:
-        assert member['capacityDays'] == expected
+        assert member['availableDays'] == expected
 
 
 @then('weekends should be excluded from capacity')
@@ -298,7 +297,7 @@ def verify_alice_capacity(context, days):
         if m['memberName'] == 'Alice Cooper'
     )
     # Base would be 10 days for 2 weeks, reduced by vacation days
-    assert alice['capacityDays'] == (10 - days)
+    assert alice['availableDays'] == (10 - days)
 
 
 @then(parsers.parse('Bob Dylan\'s capacity should be {expected:d} days'))
@@ -308,7 +307,7 @@ def verify_bob_capacity(context, expected):
         m for m in context['capacity_data']['memberCapacity']
         if m['memberName'] == 'Bob Dylan'
     )
-    assert bob['capacityDays'] == expected
+    assert bob['availableDays'] == expected
 
 
 @then('the response should include confidence percentage')
@@ -350,14 +349,14 @@ def verify_holiday_impact(context, days):
     """Verify holidays affect all members."""
     for member in context['capacity_data']['memberCapacity']:
         # Each member should have base working days minus holiday days
-        assert member['capacityDays'] == (10 - days)
+        assert member['availableDays'] == (10 - days)
 
 
 @then(parsers.parse('that team member\'s capacity should be {expected:d} days'))
 def verify_zero_capacity(context, expected):
     """Verify zero capacity for full vacation."""
     member = context['capacity_data']['memberCapacity'][0]
-    assert member['capacityDays'] == expected
+    assert member['availableDays'] == expected
 
 
 @then('Member 1\'s capacity should account for vacation and holiday')
@@ -372,7 +371,7 @@ def verify_member1_capacity(context):
         m for m in context['capacity_data']['memberCapacity']
         if m['memberName'] == 'Member 2'
     )
-    assert member1['capacityDays'] < member2['capacityDays']
+    assert member1['availableDays'] < member2['availableDays']
 
 
 @then('Member 2\'s capacity should account for holiday only')
@@ -383,4 +382,4 @@ def verify_member2_capacity(context):
         if m['memberName'] == 'Member 2'
     )
     # Should have more capacity than member 1
-    assert member2['capacityDays'] > 0
+    assert member2['availableDays'] > 0

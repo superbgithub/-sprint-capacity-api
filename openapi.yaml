@@ -1,0 +1,607 @@
+openapi: 3.0.3
+info:
+  title: Team Capacity Management API
+  description: API for managing team capacity planning across sprints
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+
+servers:
+  - url: https://api.example.com/v1
+    description: Production server
+  - url: https://staging-api.example.com/v1
+    description: Staging server
+
+paths:
+  /sprints:
+    get:
+      summary: Get all sprints
+      description: Retrieve a list of all sprints with team capacity information
+      operationId: getSprints
+      tags:
+        - Sprints
+      parameters:
+        - name: startDate
+          in: query
+          description: Filter sprints starting after this date
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          description: Filter sprints ending before this date
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Sprint'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    
+    post:
+      summary: Create a new sprint
+      description: Create a new sprint with team capacity information
+      operationId: createSprint
+      tags:
+        - Sprints
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SprintInput'
+      responses:
+        '201':
+          description: Sprint created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sprint'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /sprints/{sprintId}:
+    get:
+      summary: Get sprint by ID
+      description: Retrieve detailed information about a specific sprint
+      operationId: getSprintById
+      tags:
+        - Sprints
+      parameters:
+        - name: sprintId
+          in: path
+          description: Unique identifier for the sprint
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sprint'
+        '404':
+          description: Sprint not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    
+    put:
+      summary: Update sprint
+      description: Update an existing sprint's information
+      operationId: updateSprint
+      tags:
+        - Sprints
+      parameters:
+        - name: sprintId
+          in: path
+          description: Unique identifier for the sprint
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SprintInput'
+      responses:
+        '200':
+          description: Sprint updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sprint'
+        '404':
+          description: Sprint not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    
+    delete:
+      summary: Delete sprint
+      description: Delete a sprint from the system
+      operationId: deleteSprint
+      tags:
+        - Sprints
+      parameters:
+        - name: sprintId
+          in: path
+          description: Unique identifier for the sprint
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Sprint deleted successfully
+        '404':
+          description: Sprint not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /sprints/{sprintId}/capacity:
+    get:
+      summary: Get sprint capacity summary
+      description: Calculate and retrieve the total capacity for a sprint
+      operationId: getSprintCapacity
+      tags:
+        - Capacity
+      parameters:
+        - name: sprintId
+          in: path
+          description: Unique identifier for the sprint
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CapacitySummary'
+        '404':
+          description: Sprint not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    Sprint:
+      type: object
+      required:
+        - id
+        - sprintName
+        - sprintDuration
+        - startDate
+        - endDate
+        - teamMembers
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the sprint
+          example: "sprint-2025-01"
+        sprintName:
+          type: string
+          description: Name of the sprint
+          example: "Sprint 2025-01"
+        sprintDuration:
+          type: integer
+          description: Duration of the sprint in days
+          example: 14
+          minimum: 1
+        startDate:
+          type: string
+          format: date
+          description: Start date of the sprint
+          example: "2025-01-06"
+        endDate:
+          type: string
+          format: date
+          description: End date of the sprint
+          example: "2025-01-19"
+        teamMembers:
+          type: array
+          description: List of team members participating in the sprint
+          items:
+            $ref: '#/components/schemas/TeamMember'
+        holidays:
+          type: array
+          description: Public holidays during the sprint
+          items:
+            $ref: '#/components/schemas/Holiday'
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the sprint was created
+          example: "2025-01-01T10:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the sprint was last updated
+          example: "2025-01-02T15:30:00Z"
+    
+    SprintInput:
+      type: object
+      required:
+        - sprintName
+        - sprintDuration
+        - startDate
+        - endDate
+        - teamMembers
+      properties:
+        sprintName:
+          type: string
+          description: Name of the sprint
+          example: "Sprint 2025-01"
+        sprintDuration:
+          type: integer
+          description: Duration of the sprint in days
+          example: 14
+          minimum: 1
+        startDate:
+          type: string
+          format: date
+          description: Start date of the sprint
+          example: "2025-01-06"
+        endDate:
+          type: string
+          format: date
+          description: End date of the sprint
+          example: "2025-01-19"
+        teamMembers:
+          type: array
+          description: List of team members participating in the sprint
+          items:
+            $ref: '#/components/schemas/TeamMemberInput'
+          minItems: 1
+        holidays:
+          type: array
+          description: Public holidays during the sprint
+          items:
+            $ref: '#/components/schemas/HolidayInput'
+    
+    TeamMember:
+      type: object
+      required:
+        - id
+        - name
+        - role
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the team member
+          example: "tm-001"
+        name:
+          type: string
+          description: Full name of the team member
+          example: "John Doe"
+        role:
+          type: string
+          description: Role of the team member
+          example: "Developer"
+          enum:
+            - Developer
+            - Tester
+            - Designer
+            - Product Owner
+            - Scrum Master
+            - Tech Lead
+        email:
+          type: string
+          format: email
+          description: Email address of the team member
+          example: "john.doe@example.com"
+        confidencePercentage:
+          type: number
+          format: float
+          description: Confidence percentage for capacity calculation (0-100)
+          example: 85.0
+          minimum: 0
+          maximum: 100
+        vacations:
+          type: array
+          description: Vacation periods for this team member during the sprint
+          items:
+            $ref: '#/components/schemas/Vacation'
+    
+    TeamMemberInput:
+      type: object
+      required:
+        - name
+        - role
+      properties:
+        name:
+          type: string
+          description: Full name of the team member
+          example: "John Doe"
+        role:
+          type: string
+          description: Role of the team member
+          example: "Developer"
+          enum:
+            - Developer
+            - Tester
+            - Designer
+            - Product Owner
+            - Scrum Master
+            - Tech Lead
+        email:
+          type: string
+          format: email
+          description: Email address of the team member
+          example: "john.doe@example.com"
+        confidencePercentage:
+          type: number
+          format: float
+          description: Confidence percentage for capacity calculation (0-100)
+          example: 85.0
+          minimum: 0
+          maximum: 100
+          default: 100.0
+        vacations:
+          type: array
+          description: Vacation periods for this team member during the sprint
+          items:
+            $ref: '#/components/schemas/VacationInput'
+    
+    Holiday:
+      type: object
+      required:
+        - id
+        - date
+        - name
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the holiday
+          example: "holiday-001"
+        date:
+          type: string
+          format: date
+          description: Date of the holiday
+          example: "2025-01-01"
+        name:
+          type: string
+          description: Name of the holiday
+          example: "New Year's Day"
+        description:
+          type: string
+          description: Additional details about the holiday
+          example: "Public holiday"
+    
+    HolidayInput:
+      type: object
+      required:
+        - date
+        - name
+      properties:
+        date:
+          type: string
+          format: date
+          description: Date of the holiday
+          example: "2025-01-01"
+        name:
+          type: string
+          description: Name of the holiday
+          example: "New Year's Day"
+        description:
+          type: string
+          description: Additional details about the holiday
+          example: "Public holiday"
+    
+    Vacation:
+      type: object
+      required:
+        - id
+        - startDate
+        - endDate
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the vacation period
+          example: "vac-001"
+        startDate:
+          type: string
+          format: date
+          description: Start date of the vacation
+          example: "2025-01-10"
+        endDate:
+          type: string
+          format: date
+          description: End date of the vacation
+          example: "2025-01-12"
+        reason:
+          type: string
+          description: Reason for the vacation (optional)
+          example: "Personal leave"
+        daysCount:
+          type: integer
+          description: Number of working days in the vacation period
+          example: 3
+    
+    VacationInput:
+      type: object
+      required:
+        - startDate
+        - endDate
+      properties:
+        startDate:
+          type: string
+          format: date
+          description: Start date of the vacation
+          example: "2025-01-10"
+        endDate:
+          type: string
+          format: date
+          description: End date of the vacation
+          example: "2025-01-12"
+        reason:
+          type: string
+          description: Reason for the vacation (optional)
+          example: "Personal leave"
+    
+    CapacitySummary:
+      type: object
+      required:
+        - sprintId
+        - totalWorkingDays
+        - totalCapacityDays
+        - teamSize
+      properties:
+        sprintId:
+          type: string
+          description: Sprint identifier
+          example: "sprint-2025-01"
+        totalWorkingDays:
+          type: integer
+          description: Total working days in the sprint (excluding weekends and holidays)
+          example: 10
+        totalCapacityDays:
+          type: number
+          format: float
+          description: Total team capacity in person-days (accounting for vacations)
+          example: 45.5
+        adjustedTotalCapacity:
+          type: number
+          format: float
+          description: Total capacity adjusted by confidence percentages using the configured formula
+          example: 38.7
+        teamSize:
+          type: integer
+          description: Number of team members
+          example: 5
+        holidaysCount:
+          type: integer
+          description: Number of holidays in the sprint
+          example: 1
+        vacationDaysCount:
+          type: number
+          format: float
+          description: Total vacation days across all team members
+          example: 4.5
+        capacityFormula:
+          type: string
+          description: The formula used for capacity calculation
+          example: "availableDays * (confidencePercentage / 100)"string
+                example: "tm-001"
+              memberName:
+                type: string
+                example: "John Doe"
+              availableDays:
+                type: number
+                format: float
+                example: 9.0
+              vacationDays:
+                type: number
+                format: float
+                example: 1.0
+              confidencePercentage:
+                type: number
+                format: float
+                example: 85.0
+              adjustedCapacity:
+                type: number
+                format: float
+                description: Capacity adjusted by confidence percentage
+                example: 7.65hn Doe"
+              availableDays:
+                type: number
+                format: float
+                example: 9.0
+              vacationDays:
+                type: number
+                format: float
+                example: 1.0
+    
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: Error code
+          example: "INVALID_REQUEST"
+        message:
+          type: string
+          description: Human-readable error message
+          example: "Invalid request parameters"
+        details:
+          type: string
+          description: Additional error details
+          example: "Start date must be before end date"
+
+tags:
+  - name: Sprints
+    description: Operations related to sprint management
+  - name: Capacity
+    description: Operations related to capacity calculation

@@ -269,6 +269,21 @@ jobs:
     needs: resiliency-tests
     if: github.ref == 'refs/heads/main'
     
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: sprint_user
+          POSTGRES_PASSWORD: sprint_password
+          POSTGRES_DB: sprint_capacity_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -284,7 +299,15 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
       
+      - name: Initialize test database schema
+        env:
+          DATABASE_URL: postgresql+asyncpg://sprint_user:sprint_password@localhost:5432/sprint_capacity_test
+        run: |
+          python scripts/init_test_db.py
+      
       - name: Start FastAPI server
+        env:
+          DATABASE_URL: postgresql+asyncpg://sprint_user:sprint_password@localhost:5432/sprint_capacity_test
         run: |
           uvicorn app.main:app --host 0.0.0.0 --port 8000 &
           sleep 5
@@ -331,11 +354,22 @@ jobs:
       - name: Test Docker image
         run: |
           docker build -t sprint-capacity-api:test .
-          docker run -d -p 8000:8000 --name test-container sprint-capacity-api:test
+          # Start PostgreSQL for testing
+          docker run -d --name test-postgres \
+            -e POSTGRES_USER=sprint_user \
+            -e POSTGRES_PASSWORD=sprint_password \
+            -e POSTGRES_DB=sprint_capacity_test \
+            postgres:16-alpine
           sleep 5
+          # Start app container linked to postgres
+          docker run -d -p 8000:8000 --name test-container \
+            --link test-postgres:postgres \
+            -e DATABASE_URL="postgresql+asyncpg://sprint_user:sprint_password@postgres:5432/sprint_capacity_test" \
+            sprint-capacity-api:test
+          sleep 10
           curl -f http://localhost:8000/health || exit 1
-          docker stop test-container
-          docker rm test-container
+          docker stop test-container test-postgres
+          docker rm test-container test-postgres
 
   # Stage 9: Deploy (Placeholder for future deployment)
   deploy:

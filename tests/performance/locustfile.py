@@ -38,7 +38,6 @@ class SprintAPIUser(HttpUser):
             {
                 "name": f"Member {i}",
                 "role": random.choice(["Developer", "Tester", "Manager"]),
-                "confidencePercentage": random.uniform(70.0, 100.0),
                 "vacations": []
             }
             for i in range(team_size)
@@ -61,10 +60,10 @@ class SprintAPIUser(HttpUser):
         ]
         
         return {
-            "sprintName": f"{name_prefix} {random.randint(1000, 9999)}",
-            "sprintDuration": random.randint(7, 21),
+            "sprintNumber": f"25-{random.randint(400, 999)}",
             "startDate": "2025-12-01",
             "endDate": "2025-12-20",
+            "confidencePercentage": random.uniform(70.0, 100.0),
             "teamMembers": team_members,
             "holidays": holidays
         }
@@ -181,15 +180,14 @@ class CapacityHeavyUser(HttpUser):
         for i in range(5):
             # Create sprints with many team members for complex calculations
             sprint_data = {
-                "sprintName": f"Capacity Test Sprint {i}",
-                "sprintDuration": 14,
+                "sprintNumber": f"25-{500+i}",
                 "startDate": "2025-12-01",
                 "endDate": "2025-12-14",
+                "confidencePercentage": random.uniform(75.0, 95.0),
                 "teamMembers": [
                     {
                         "name": f"Member {j}",
                         "role": random.choice(["Developer", "Tester", "Manager"]),
-                        "confidencePercentage": random.uniform(75.0, 95.0),
                         "vacations": [
                             {
                                 "startDate": "2025-12-05",

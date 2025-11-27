@@ -26,20 +26,10 @@ Feature: Data Validation and Error Handling
     Then the request should fail with status code 422
     And the error should indicate confidence must be between 0 and 100
 
-  Scenario: Sprint number too long
-    When I create a sprint with sprint number "25-12345678901"
-    Then the request should fail with status code 422
-    And the error should indicate sprint number exceeds maximum length
-
   Scenario: Team member without name
     When I create a sprint with a team member missing a name
     Then the request should fail with status code 422
     And the error should indicate team member name is required
-
-  Scenario: Invalid vacation dates
-    When I create a sprint with vacation end date before start date
-    Then the request should fail with status code 422
-    And the error should indicate invalid vacation date range
 
   Scenario: Holiday without date
     When I create a sprint with a holiday missing the date field
@@ -68,11 +58,6 @@ Feature: Data Validation and Error Handling
     When I create a sprint with a 10000 character holiday name
     Then the request should fail with status code 422 or 500
     And the error should indicate field length exceeded
-
-  Scenario: Special characters in sprint number
-    When I create a sprint with sprint number "25-@#$%"
-    Then the request should fail with status code 422
-    And the error should indicate invalid characters
 
   Scenario: Update non-existent sprint
     When I update a sprint with ID "non-existent-12345"

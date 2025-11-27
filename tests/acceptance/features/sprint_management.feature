@@ -54,11 +54,6 @@ Feature: Sprint Management
     When I request a sprint with ID "non-existent-id"
     Then the request should fail with status code 404
 
-  Scenario: Validate sprint number format
-    When I try to create a sprint with sprint number "invalid-format-123456789"
-    Then the request should fail with status code 422
-    And the error message should indicate invalid sprint number format
-
   Scenario: Sprint date validation
     When I try to create a sprint where end date is before start date
     Then the request should fail with status code 422

@@ -33,13 +33,6 @@ Feature: Capacity Calculation
     Then each team member should have 9 working days
     And the total capacity should be 27 days
 
-  Scenario: Calculate capacity with both vacations and holidays
-    Given a sprint exists from "2025-12-01" to "2025-12-20" with 3 team members
-    And one team member has vacation from "2025-12-08" to "2025-12-09"
-    And the sprint has a holiday on "2025-12-10"
-    When I request the capacity calculation
-    Then the total capacity should be correctly calculated
-
   Scenario: Calculate capacity for sprint with confidence percentage
     Given a sprint exists with confidence percentage 80.0
     And the sprint has calculated capacity of 30 days

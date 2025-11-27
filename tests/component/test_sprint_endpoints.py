@@ -31,9 +31,11 @@ async def cleanup_database():
 
 @pytest.fixture
 def sample_sprint_data():
-    """Sample sprint data for tests"""
+    """Sample sprint data for tests - uses unique sprint number each time"""
+    import uuid
+    unique_suffix = str(uuid.uuid4())[:8]
     return {
-        "sprintNumber": "25-50",
+        "sprintNumber": f"25-test-{unique_suffix}",
         "startDate": "2025-11-26",
         "endDate": "2025-12-09",
         "confidencePercentage": 85.0,

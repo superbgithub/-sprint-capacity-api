@@ -310,12 +310,6 @@ jobs:
           bandit -r app/ -ll
         continue-on-error: true
       
-      - name: Check dependencies for vulnerabilities (Safety)
-        run: |
-          safety check --json --output safety-report.json || true
-          safety check
-        continue-on-error: true
-      
       - name: Check dependencies for vulnerabilities (pip-audit)
         run: |
           pip-audit --format json --output pip-audit-report.json || true
@@ -342,7 +336,6 @@ jobs:
           path: |
             security-report.html
             bandit-report.json
-            safety-report.json
             pip-audit-report.json
 
   # Stage 8: Acceptance Tests (BDD/Gherkin)

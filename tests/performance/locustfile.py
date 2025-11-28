@@ -61,8 +61,8 @@ class SprintAPIUser(HttpUser):
             }
         ]
         
-        # Generate unique sprint number using timestamp + random to avoid collisions
-        unique_id = str(uuid.uuid4())[:6]  # First 6 chars of UUID
+        # Generate unique sprint number using full UUID to avoid collisions under high load
+        unique_id = str(uuid.uuid4())  # Full UUID for guaranteed uniqueness
         
         return {
             "sprintNumber": f"25-{unique_id}",

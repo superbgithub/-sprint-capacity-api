@@ -23,61 +23,17 @@ class SprintAPIUser(HttpUser):
     def on_start(self):
         """Initialize user session"""
         self.sprint_ids = []
-        self.create_initial_sprints()
-    
-    def create_initial_sprints(self):
-        """Create some initial sprints for testing"""
-        for i in range(3):
-            sprint_data = self._generate_sprint_data(f"Initial Sprint {i}")
-            response = self.client.post("/v1/sprints", json=sprint_data)
-            if response.status_code == 201:
-                self.sprint_ids.append(response.json()["id"])
-    
-    def _generate_sprint_data(self, name_prefix="Sprint"):
-        """Generate random sprint data"""
-        team_size = random.randint(3, 10)
-        team_members = [
-            {
-                "name": f"Member {i}",
-                "role": random.choice(["Developer", "Tester", "Manager"]),
-                "vacations": []
-            }
-            for i in range(team_size)
-        ]
-        
-        # Randomly add vacations to some members
-        for member in random.sample(team_members, k=min(3, len(team_members))):
-            member["vacations"] = [
-                {
-                    "startDate": "2025-12-05",
-                    "endDate": "2025-12-06"
-                }
-            ]
-        
-        holidays = [
-            {
-                "holidayDate": "2025-12-25",
-                "name": "Christmas"
-            }
-        ]
-        
-        # Generate unique sprint number using full UUID to avoid collisions under high load
-        unique_id = str(uuid.uuid4())  # Full UUID for guaranteed uniqueness
-        
-        return {
-            "sprintNumber": f"25-{unique_id}",
-            "startDate": "2025-12-01",
-            "endDate": "2025-12-20",
-            "confidencePercentage": random.uniform(70.0, 100.0),
-            "teamMembers": team_members,
-            "holidays": holidays
-        }
-    
+        # Note: No initial sprint creation - tests will fetch existing sprints
+        # from the database and populate self.sprint_ids dynamically
+
     @task(5)
     def get_all_sprints(self):
         """Get all sprints (high frequency task)"""
         with self.client.get("/v1/sprints", catch_response=True) as response:
             if response.status_code == 200:
+                # Populate sprint_ids if empty
+                if not self.sprint_ids and response.json():
+                    self.sprint_ids = [sprint["id"] for sprint in response.json()]
                 response.success()
             else:
                 response.failure(f"Failed with status {response.status_code}")
@@ -128,22 +84,10 @@ class SprintAPIUser(HttpUser):
     
     @task(1)
     def delete_sprint(self):
-        """Delete a sprint (low frequency)"""
-        if not self.sprint_ids or len(self.sprint_ids) < 5:
-            # Keep at least some sprints around
-            return
-        
-        sprint_id = random.choice(self.sprint_ids)
-        
-        with self.client.delete(f"/v1/sprints/{sprint_id}", catch_response=True) as response:
-            if response.status_code == 204:
-                self.sprint_ids.remove(sprint_id)
-                response.success()
-            elif response.status_code == 404:
-                self.sprint_ids.remove(sprint_id)
-                response.success()
-            else:
-                response.failure(f"Failed to delete sprint: {response.status_code}")
+        """Delete a sprint (low frequency - skipped in read-only mode)"""
+        # Skip deletion since we're not creating sprints
+        # This is a read-only performance test
+        return
 
 
 # Removed CapacityHeavyUser class - causing 422 validation errors during sprint creation

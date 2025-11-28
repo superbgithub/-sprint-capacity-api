@@ -56,7 +56,7 @@ services:
 
   # Sprint Capacity API
   api:
-    build: .
+    build: ./backend
     container_name: sprint-capacity-api
     ports:
       - "8000:8000"
@@ -125,3 +125,4 @@ volumes:
   postgres_data:
   prometheus_data:
   grafana_data:
+

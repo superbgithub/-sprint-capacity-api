@@ -538,7 +538,7 @@ jobs:
   test-summary:
     name: Test Summary
     runs-on: ubuntu-latest
-    needs: [acceptance-tests]
+    needs: [performance-tests]
     if: always()
     
     steps:
@@ -547,14 +547,14 @@ jobs:
           echo "==================================="
           echo "Test Pipeline Summary"
           echo "==================================="
-          echo "Acceptance Tests: ${{ needs.acceptance-tests.result }}"
+          echo "Performance Tests: ${{ needs.performance-tests.result }}"
           echo "==================================="
           echo "Note: All other test stages are skipped"
           echo "==================================="
           
-          if [ "${{ needs.acceptance-tests.result }}" != "success" ]; then
-            echo "❌ Acceptance tests failed!"
+          if [ "${{ needs.performance-tests.result }}" != "success" ]; then
+            echo "❌ Performance tests failed!"
             exit 1
           else
-            echo "✅ Acceptance tests passed!"
+            echo "✅ Performance tests passed!"
           fi

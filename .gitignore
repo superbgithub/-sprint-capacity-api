@@ -36,6 +36,8 @@ htmlcov/
 coverage.xml
 *.cover
 .hypothesis/
+test-reports/
+*-report.html
 
 # IDE
 .vscode/

@@ -272,7 +272,7 @@ jobs:
   security-tests:
     name: Security Tests
     runs-on: ubuntu-latest
-    needs: resiliency-tests
+    # needs: resiliency-tests - Removed to run standalone
     # if: false  # ENABLED - Running security tests
     
     services:
